@@ -11,35 +11,36 @@ class MdpModel():
     def __init__(self):
         self.params_to_policy = OrderedDict()
 
-    def run_param_ranges(self, param_ranges, disc_rates):
-        all_n_years = param_ranges['n_years']
-        all_n_techstages = param_ranges['n_techstages']
-        all_n_plants = param_ranges['n_plants']
-        all_c_co2_init = param_ranges['c_co2_init']
-        all_co2_inc = param_ranges['co2_inc']
-        all_c_cap_res = param_ranges['c_cap_res']
-        all_c_om_ff = param_ranges['c_om_ff']
-        all_ff_emit = param_ranges['ff_emit']
-        all_p_rplant_fail = 1 / param_ranges['rplant_life']
-        all_p_adv_techstage = param_ranges['p_adv_techstage']
-        param_combos = it.product(all_n_years, all_n_techstages, all_n_plants,
-                                  all_c_co2_init, all_co2_inc, all_c_cap_res,
-                                  all_c_om_ff, all_ff_emit, all_p_rplant_fail, 
-                                  all_p_adv_techstage, disc_rates)
+    def run_param_ranges(self, param_ranges):
+        param_combos = it.product(param_ranges['n_years'],
+                                  param_ranges['n_tech_stages'],
+                                  param_ranges['n_plants'],
+                                  param_ranges['plant_size'],
+                                  param_ranges['plant_capacity'],
+                                  param_ranges['c_co2_init'],
+                                  param_ranges['co2_inc'],
+                                  param_ranges['c_cap_res'],
+                                  param_ranges['c_om_ff'],
+                                  param_ranges['ff_emit'],
+                                  param_ranges['p_rplant_fail'],
+                                  param_ranges['p_adv_tech_stage'],
+                                  param_ranges['disc_rate'])
         for combo in param_combos:
             params = OrderedDict()
             params['n_years'] = combo[0]
-            params['n_techstages'] = combo[1]
+            params['n_tech_stages'] = combo[1]
             params['n_plants'] = combo[2]
-            params['c_co2_init'] = combo[3]
-            params['co2_inc'] = combo[4]
-            params['c_cap_res'] = combo[5]
-            params['c_om_ff'] = combo[6]
-            params['ff_emit'] = combo[7]
-            params['p_rplant_fail'] = combo[8]
-            params['p_adv_techstage'] = combo[9]
-            disc_rate = combo[10]
-            mdp_instance = self.run_single(params, disc_rate)
+            params['plant_size'] = combo[3]
+            params['plant_capacity'] = combo[4]
+            params['c_co2_init'] = combo[5]
+            params['co2_inc'] = combo[6]
+            params['c_cap_res'] = combo[7]
+            params['c_om_ff'] = combo[8]
+            params['ff_emit'] = combo[9]
+            params['p_rplant_fail'] = combo[10]
+            params['p_adv_tech_stage'] = combo[11]
+            params['disc_rate'] = combo[12]
+            mdp_instance = self.run_single(params)
             self.params_to_policy[params] = mdp_instance.policy
 
     def run_single(self, params):
@@ -48,30 +49,49 @@ class MdpModel():
         mdp_instance.run()
         return mdp_instance
 
-    def print(self):
-        assert(self.mdp_instance is not None)
-        print("Parameters:\n", self.mdp_instance.params)
-        self.mdp_instance.print_policy()
+    def print_single(self, mdp_instance):
+        assert(mdp_instance is not None)
+        mdp_instance.print_params()
+        mdp_instance.print_policy()
+
+    def create_params(self, param_list):
+        params = OrderedDict()
+        params['n_years'] = param_list[0]
+        params['n_tech_stages'] = param_list[1]
+        params['n_plants'] = param_list[2]
+        params['plant_size'] = param_list[3]
+        params['plant_capacity'] = param_list[4]
+        params['c_co2_init'] = param_list[5]
+        params['co2_inc'] = param_list[6]
+        params['c_cap_res'] = param_list[7]
+        params['c_om_ff'] = param_list[8]
+        params['ff_emit'] = param_list[9]
+        params['p_rplant_fail'] = param_list[10]
+        params['p_adv_tech_stage'] = param_list[11]
+        params['disc_rate'] = param_list[12]
+        return params
 
 
 class MdpFiniteHorizon():
-    def __init__(self, params, disc_rate):
+    def __init__(self, params):
         self.mdp_fh = None
         # Parameters
-        self.n_years = self.params['n_years']
-        self.n_techstages = self.params['n_techstages']
-        self.n_plants = self.params['n_plants']
-        self.c_co2_init = self.params['c_co2_init']
-        self.co2_inc = self.params['co2_inc']
-        self.c_cap_res = self.params['c_cap_res']
-        self.c_om_ff = self.params['c_om_ff']
-        self.ff_emit = self.params['ff_emit']
-        self.p_rplant_fail = 1 / self.params['rplant_life']
-        self.p_adv_techstage = params['p_adv_techstage']
-        self.disc_rate = disc_rate
+        self.n_years = params['n_years']
+        self.n_tech_stages = params['n_tech_stages']
+        self.n_plants = params['n_plants']
+        self.plant_size = params['plant_size']
+        self.plant_capacity = params['plant_capacity']
+        self.c_co2_init = params['c_co2_init']
+        self.co2_inc = params['co2_inc']
+        self.c_cap_res = params['c_cap_res']
+        self.c_om_ff = params['c_om_ff']
+        self.ff_emit = params['ff_emit']
+        self.p_rplant_fail = params['p_rplant_fail']
+        self.p_adv_tech_stage = params['p_adv_tech_stage']
+        self.disc_rate = params['disc_rate']
         # Dimensions
         self.A = self.n_plants + 1
-        self.S = (self.n_years+1) * self.n_techstages * (self.n_plants+1)
+        self.S = (self.n_years+1) * self.n_tech_stages * (self.n_plants+1)
         # States
         self.state_to_id = OrderedDict()
         self.id_to_state = OrderedDict()
@@ -80,12 +100,12 @@ class MdpFiniteHorizon():
         self.rewards = None
 
     def initialize(self):
-        print("Initializing MDP...")
+        print("Initializing MDP...\n")
         self._enumerate_states()
         self._trans_probs_wrapper()
-        self._trans_probs_wrapper()
         self._rewards_wrapper()
-        self.mdp_fh = mtb.mdp.FiniteHorizon(self.transitions, self.rewards, self.disc_rate, self.n_years)
+        self.mdp_fh = mtb.mdp.FiniteHorizon(self.transitions, self.rewards,
+                                            self.disc_rate, self.n_years)
         print("Initialization done.\n")
 
     def run(self):
@@ -93,9 +113,25 @@ class MdpFiniteHorizon():
         self.mdp_fh.run()
         print("MDP done.\n")
 
+    def print_params(self):
+        print("PARAMETERS:")
+        print("n_years:", self.n_years)
+        print("n_tech_stages", self.n_tech_stages)
+        print("n_plants", self.n_plants)
+        print("plant_size:", self.plant_size)
+        print("plant_capacity:", self.plant_capacity)
+        print("c_co2_init:", self.c_co2_init)
+        print("co2_inc:", self.co2_inc)
+        print("c_cap_res:", self.c_cap_res)
+        print("c_om_ff:", self.c_om_ff)
+        print("ff_emit:", self.ff_emit)
+        print("p_rplant_fail:", self.p_rplant_fail)
+        print("p_adv_tech_stage:", self.p_adv_tech_stage)
+        print("disc_rate:", self.disc_rate, "\n")
+
     def print_policy(self):
         assert self.mdp_fh is not None
-        print("Optimal policy:\nState\t     Time")
+        print("OPTIMAL POLICY:\nState\t     Time")
         for row, state in zip(self.mdp_fh.policy, self._get_iter_states()):
             print(state, ": ", row)
 
@@ -106,7 +142,7 @@ class MdpFiniteHorizon():
         iter_states = self._get_iter_states()
         for state in iter_states:
             (t, v, r) = state
-            self.self.state_to_id[state] = idx
+            self.state_to_id[state] = idx
             idx += 1
         self.id_to_state = {v: k for k, v in self.state_to_id.items()}
 
@@ -115,7 +151,7 @@ class MdpFiniteHorizon():
     def _trans_probs_wrapper(self):
         self.transitions = np.zeros([self.A, self.S, self.S])
         print("Filling transitions probabilities for A = 0 (do nothing)...")
-        self._fill_trans_donothing(0)
+        self._fill_trans_donothing()
         print("Filling transitions probabilities for other A...")
         self._fill_trans_other()
         print("Transitions done.\n")
@@ -149,7 +185,7 @@ class MdpFiniteHorizon():
                     self._loop_failure(state_curr, a, a)
                 assert np.isclose(np.sum(self.transitions[a][idx_curr]),
                                   1.0), np.sum(self.transitions[a][idx_curr])
-                self.normalize_trans_row(state_curr, a)
+                self._normalize_trans_row(state_curr, a)
 
     # REWARDS
 
@@ -167,28 +203,30 @@ class MdpFiniteHorizon():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                cost = self.calc_cost(t, v, r, a)
+                cost = self._calc_cost(t, v, r, a)
                 # Model reward as negative cost.
                 self.rewards[idx][a] = -1 * cost
 
     def _calc_cost(self, t, v, r, a):
         if a + r > self.n_plants:
             return np.inf
-        carbontax = self.c_co2_init * (1.05 ** t)
-        cost_fplants = (self.n_plants - a) * (self.c_om_ff + self.ff_emit * carbontax)
+        carbontax = self.c_co2_init * ((1+self.co2_inc) ** t)
+        hoursyr = 24*52*365
+        cost_ff_emit = self.ff_emit*self.plant_size*self.plant_capacity*hoursyr*carbontax
+        cost_fplants = (self.n_plants-a) * (self.c_om_ff*self.plant_size + cost_ff_emit)
         # Assume renewable plants cost nothing after construction.
-        cost_rplants = a * self.c_cap_res[v]
-        total = cost_rplants + cost_fplants
+        cost_rplants = a*self.c_cap_res[v]*self.plant_size
+        total = (cost_rplants+cost_fplants) / 1e6
         return round(total)
 
     # HELPER FUNCTIONS
 
     def _get_iter_states(self):
         return it.product(np.arange(self.n_years+1),
-                          np.arange(self.n_techstages),
+                          np.arange(self.n_tech_stages),
                           np.arange(self.n_plants+1))
 
-    def __breakdown_state(self, state):
+    def _breakdown_state(self, state):
         (t, v, r) = state
         state_curr = state
         idx_curr = self.state_to_id[state_curr]
@@ -206,13 +244,13 @@ class MdpFiniteHorizon():
             plants_next = r-e+a_actual
             state_next = (t+1, v, plants_next)
             idx_next = self.state_to_id[state_next]
-            if v < self.n_techstages - 1:
+            if v < self.n_tech_stages - 1:
                 state_next_v = (t+1, v+1, plants_next)
                 idx_next_v = self.state_to_id[state_next_v]
                 # Tech stage may remain the same.
-                self.transitions[a][idx_curr][idx_next] = (1.0-self.p_adv_techstage) * prob_fail
+                self.transitions[a][idx_curr][idx_next] = (1.0-self.p_adv_tech_stage) * prob_fail
                 # Tech stage may advance (assume only possible to advance by 1).
-                self.transitions[a][idx_curr][idx_next_v] = self.p_adv_techstage * prob_fail
+                self.transitions[a][idx_curr][idx_next_v] = self.p_adv_tech_stage * prob_fail
             else:
                 # Tech stage must remain the same.
                 self.transitions[a][idx_curr][idx_next] = prob_fail
