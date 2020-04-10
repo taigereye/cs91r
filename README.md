@@ -12,10 +12,10 @@ Faculty: Milind Tambe
 
 ## Notation
 
-rplant - renewable plant 
-fplant - fossil fuel plant
-RES - referring to renewable plant
-FF - referring to fossil fuel plant
+- rplant : renewable plant 
+- fplant : fossil fuel plant 
+- RES (or res) : referring to renewable plant 
+- FF (or ff) : referring to fossil fuel plant 
 
 ## Progress
 
