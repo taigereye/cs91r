@@ -27,6 +27,8 @@ VARIABLES
 - `n_years`: Total time period (number of steps).
 - `n_techstages`: Number of technological advancement stages it is possible to pass through.
 - `n_plants`: Total number of power plants. All begin as fossil fuel plants and can be converted to renewable.
+- `plant_size`: Nameplate capacity of single power plant. 
+- `plant_capacity`: Capacity factor of single power plant.
 - `c_co2_init`: Starting price of carbon per ton.
 - `co2_inc`: Increment of carbon tax as percent per year.
 - `c_cap_res`: Initial construction costs of a renewable plant per kW (avg of solar PV and onshore wind). Depends on tech stage.
@@ -43,6 +45,7 @@ ASSUMPTIONS
 - Renewable power plant construction incurs zero emissions.
 - Cost of replacing failed renewable power plant is equal to cost of building new plant in current tech stage. 
 - Renewable power plant lifetime (and resulting need for replacement) can be modeled as Bernoulli probability of failure each year (probability is reciprocal of lifetime).
+- Fossil fuel and renewable power plants have the same capacity factor and are built to the same generation size.
 
 ### MDP v1
 
@@ -50,6 +53,9 @@ VARIABLES
 - `n_years`: Total time period (number of steps).
 - `n_techstages`: Number of technological advancement stages it is possible to pass through.
 - `n_plants`: Total number of power plants. All begin as fossil fuel plants and can be converted to renewable.
+- `fplant_size`: Nameplate capacity of single fossil fuel plant. 
+- `fplant_capacity`: Capacity factor of single fossil fuel plant.
+- `rplant_capacity`: Capacity factor of single renewable plant. Nameplate capacity (size) of renewable plant to be built can be calculated from other plant size/capacity parameters.
 - `c_co2_init`: Starting price of carbon per ton.
 - `co2_inc`: Increment of carbon tax as percent per year.
 - `c_ff_fix`: Annual fixed operation & maintenance costs of a fossil fuel plant per kW (avg of coal and natural gas). Independent of tech stage.
@@ -60,7 +66,7 @@ VARIABLES
 - `c_bss_fix`: Annual fixed operation & maintenance costs of a 4h li-ion battery system plant per kWh. Independent of tech stage.
 - `c_bss_var`: Annual variable operation & maintenance costs of a 4 hour li-ion battery system plant per kWh. Independent of tech stage.
 - `p_adv_techstage`: Probability that tech stage advances to the next given the current stage is not the highest. Assume it is only possible to advance by 1 at a time.
-- `p_rplant_fail` = 1 / `rplant_life`: Probability that a renewable plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
+- `p_rplant_fail`: Probability that a renewable plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
 - `disc_rate`: Discount rate (avg of solar PV and onshore wind rates in North America).
 
 ASSUMPTIONS
