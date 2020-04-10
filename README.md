@@ -17,6 +17,18 @@ Faculty: Milind Tambe
 - RES (or res) : referring to renewable plant 
 - FF (or ff) : referring to fossil fuel plant 
 
+## Running
+
+To run any of the MDP model versions implemented, first create a .txt file containing the parameters for the appropriate version model in Python dictionary format. Any parameters that depend on tech stage should be written as a tuple of length `n_techstages`. 
+
+Run the following command, specifying the model version and passing in the .txt file for parameters. Any file name may be used for the output file, which is where the parameters used and optimal policy produced after running the MDP will be printed.
+
+```
+$ python run_mdp -m [model_version] -p [params_file] -o [output_file]
+```
+
+In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
+
 ## Progress
 
 ### MDP v0
