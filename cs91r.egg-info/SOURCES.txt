@@ -1,0 +1,6 @@
+README.md
+setup.py
+cs91r.egg-info/PKG-INFO
+cs91r.egg-info/SOURCES.txt
+cs91r.egg-info/dependency_links.txt
+cs91r.egg-info/top_level.txt

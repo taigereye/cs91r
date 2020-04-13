@@ -1,10 +1,12 @@
-from mdp_v0 import MdpModelV0
-from mdp_v1 import MdpModelV1
-
-import numpy as np
-
 import getopt
 import sys
+
+import numpy as np
+from pathlib import Path
+
+from mdp.models.mdp_v0 import MdpModelV0
+from mdp.models.mdp_v1 import MdpModelV1
+from mdp.models.mdp_v2 import MdpModelV2
 
 
 def main(argv):
@@ -14,28 +16,34 @@ def main(argv):
         print('usage: run_mdp.py -m <modelversion> -p <paramsfile> -o <outputfile>')
         sys.exit(2)
 
-    version = opts[0][1]
-    with open(opts[1][1], 'r') as paramsfile:
+    version = str(opts[0][1])
+
+    params_dir = Path("results/params_v" + version)
+    pf = params_dir / opts[1][1]
+    with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
+    paramsfile.close()
 
     mdp_model = None
     if int(version) == 0:
         mdp_model = MdpModelV0()
     elif int(version) == 1:
         mdp_model = MdpModelV1()
+    elif int(version) == 2:
+        mdp_model = MdpModelV2()
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
 
-    mdp_fh = mdp_model.run_single(params)
+    mdp_fh = mdp_model.run_fh(params)
     stdout_og = sys.stdout
-    np.set_printoptions(linewidth=300)
+    np.set_printoptions(linewidth=200)
 
-    outfile = open(opts[2][1], 'w')
+    runs_dir = Path("results/runs_v" + version)
+    of = runs_dir / opts[2][1]
+    outfile = open(of, 'w+')
     sys.stdout = outfile
-    mdp_model.print_single(mdp_fh)
-    mdp_fh.print_rewards()
-
+    mdp_model.print_fh(mdp_fh)
     sys.stdout = stdout_og
     outfile.close()
 

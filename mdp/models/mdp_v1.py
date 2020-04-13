@@ -1,104 +1,78 @@
+from collections import OrderedDict
+import itertools as it
 import numpy as np
 import mdptoolbox as mtb
 from scipy.stats import binom
 
-from collections import OrderedDict
-import itertools as it
 
-
-class MdpModelV0():
+class MdpModelV1():
     def __init__(self):
         self.params_to_policy = OrderedDict()
         self.param_names = ['n_years',
                             'n_tech_stages',
                             'n_plants',
-                            'plant_size',
-                            'plant_capacity',
+                            'fplant_size',
+                            'fplant_capacity',
+                            'rplant_capacity',
                             'c_co2_init',
                             'co2_inc',
-                            'c_cap_res',
-                            'c_om_ff',
+                            'c_ff_fix',
+                            'c_ff_var',
                             'ff_emit',
+                            'c_res_cap',
+                            'c_bss_cap',
+                            'c_bss_fix',
+                            'c_bss_var',
                             'p_rplant_fail',
                             'p_adv_tech_stage',
                             'disc_rate']
 
     def run_param_ranges(self, param_ranges):
-        param_combos = it.product(param_ranges['n_years'],
-                                  param_ranges['n_tech_stages'],
-                                  param_ranges['n_plants'],
-                                  param_ranges['plant_size'],
-                                  param_ranges['plant_capacity'],
-                                  param_ranges['c_co2_init'],
-                                  param_ranges['co2_inc'],
-                                  param_ranges['c_cap_res'],
-                                  param_ranges['c_om_ff'],
-                                  param_ranges['ff_emit'],
-                                  param_ranges['p_rplant_fail'],
-                                  param_ranges['p_adv_tech_stage'],
-                                  param_ranges['disc_rate'])
+        param_combos = it.product(**param_ranges.values())
         for combo in param_combos:
-            params = OrderedDict()
-            params['n_years'] = combo[0]
-            params['n_tech_stages'] = combo[1]
-            params['n_plants'] = combo[2]
-            params['plant_size'] = combo[3]
-            params['plant_capacity'] = combo[4]
-            params['c_co2_init'] = combo[5]
-            params['co2_inc'] = combo[6]
-            params['c_cap_res'] = combo[7]
-            params['c_om_ff'] = combo[8]
-            params['ff_emit'] = combo[9]
-            params['p_rplant_fail'] = combo[10]
-            params['p_adv_tech_stage'] = combo[11]
-            params['disc_rate'] = combo[12]
-            mdp_instance = self.run_single(params)
-            self.params_to_policy[params] = mdp_instance.policy
+            params = self.create_params(combo)
+            mdp_fh = self.run_fh(params)
+            self.params_to_policy[params] = mdp_fh.mdp_inst.policy
 
-    def run_single(self, params):
-        mdp_instance = MdpFiniteHorizonV0(params)
-        mdp_instance.initialize()
-        mdp_instance.run()
-        return mdp_instance
+    def run_fh(self, params):
+        mdp_fh = MdpFiniteHorizonV1(params)
+        mdp_fh.initialize()
+        mdp_fh.run()
+        return mdp_fh
 
-    def print_single(self, mdp_instance):
-        assert(mdp_instance is not None)
-        mdp_instance.print_params()
-        mdp_instance.print_policy()
+    def print_fh(self, mdp_fh):
+        assert(mdp_fh is not None)
+        mdp_fh.print_params()
+        mdp_fh.print_policy()
 
     def create_params(self, param_list):
         params = OrderedDict()
-        params['n_years'] = param_list[0]
-        params['n_tech_stages'] = param_list[1]
-        params['n_plants'] = param_list[2]
-        params['plant_size'] = param_list[3]
-        params['plant_capacity'] = param_list[4]
-        params['c_co2_init'] = param_list[5]
-        params['co2_inc'] = param_list[6]
-        params['c_cap_res'] = param_list[7]
-        params['c_om_ff'] = param_list[8]
-        params['ff_emit'] = param_list[9]
-        params['p_rplant_fail'] = param_list[10]
-        params['p_adv_tech_stage'] = param_list[11]
-        params['disc_rate'] = param_list[12]
+        for i in np.arange(len(self.param_names)):
+            params[self.param_names[i]] = param_list[i]
         return params
 
 
-class MdpFiniteHorizonV0():
+class MdpFiniteHorizonV1():
     def __init__(self, params):
-        self.mdp_fh = None
+        self.mdp_inst = None
         self.params = params
         # Parameters
         self.n_years = params['n_years']
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
-        self.plant_size = params['plant_size']
-        self.plant_capacity = params['plant_capacity']
+        self.fplant_size = params['fplant_size']
+        self.fplant_capacity = params['fplant_capacity']
+        self.rplant_size = params['fplant_size']*params['fplant_capacity']/params['rplant_capacity']
+        self.rplant_capacity = params['rplant_capacity']
         self.c_co2_init = params['c_co2_init']
         self.co2_inc = params['co2_inc']
-        self.c_cap_res = params['c_cap_res']
-        self.c_om_ff = params['c_om_ff']
+        self.c_ff_fix = params['c_ff_fix']
+        self.c_ff_var = params['c_ff_var']
         self.ff_emit = params['ff_emit']
+        self.c_res_cap = params['c_res_cap']
+        self.c_bss_cap = params['c_bss_cap']
+        self.c_bss_fix = params['c_bss_fix']
+        self.c_bss_var = params['c_bss_var']
         self.p_rplant_fail = params['p_rplant_fail']
         self.p_adv_tech_stage = params['p_adv_tech_stage']
         self.disc_rate = params['disc_rate']
@@ -113,46 +87,44 @@ class MdpFiniteHorizonV0():
         self.rewards = None
 
     def initialize(self):
-        print("Initializing MDP v0...\n")
+        print("Initializing MDP v1...\n")
         self._enumerate_states()
         self._trans_probs_wrapper()
         self._rewards_wrapper()
-        self.mdp_fh = mtb.mdp.FiniteHorizon(self.transitions, self.rewards,
-                                            self.disc_rate, self.n_years)
+        self.mdp_inst = mtb.mdp.FiniteHorizon(self.transitions,
+                                              self.rewards,
+                                              self.disc_rate,
+                                              self.n_years)
         print("Initialization done.\n")
 
     def run(self):
-        print("Running MDP v0...")
-        self.mdp_fh.run()
+        print("Running MDP v1...")
+        self.mdp_inst.run()
         print("MDP done.\n")
 
     def print_params(self):
         print("PARAMETERS:")
-        print("n_years:", self.n_years)
-        print("n_tech_stages", self.n_tech_stages)
-        print("n_plants", self.n_plants)
-        print("plant_size:", self.plant_size)
-        print("plant_capacity:", self.plant_capacity)
-        print("c_co2_init:", self.c_co2_init)
-        print("co2_inc:", self.co2_inc)
-        print("c_cap_res:", self.c_cap_res)
-        print("c_om_ff:", self.c_om_ff)
-        print("ff_emit:", self.ff_emit)
-        print("p_rplant_fail:", self.p_rplant_fail)
-        print("p_adv_tech_stage:", self.p_adv_tech_stage)
-        print("disc_rate:", self.disc_rate, "\n")
+        for k, v in self.params.items():
+            print(k, ":", v)
+        print("\n")
 
     def print_policy(self):
-        assert self.mdp_fh is not None
+        assert self.mdp_inst is not None
         print("OPTIMAL POLICY:\nState\t     Time")
-        for row, state in zip(self.mdp_fh.policy, self.get_iter_states()):
+        for row, state in zip(self.mdp_inst.policy, self._get_iter_states()):
+            print(state, ": ", row)
+
+    def print_rewards(self):
+        assert self.mdp_inst is not None
+        print("REWARDS MATRIX:")
+        for row, state in zip(self.rewards, self._get_iter_states()):
             print(state, ": ", row)
 
     # STATE SPACE
 
     def _enumerate_states(self):
         idx = 0
-        iter_states = self.get_iter_states()
+        iter_states = self._get_iter_states()
         for state in iter_states:
             (t, v, r) = state
             self.state_to_id[state] = idx
@@ -170,7 +142,7 @@ class MdpFiniteHorizonV0():
         print("Transitions done.\n")
 
     def _fill_trans_donothing(self):
-        iter_states = self.get_iter_states()
+        iter_states = self._get_iter_states()
         for state in iter_states:
             (t, v, r), state_curr, idx_curr = self._breakdown_state(state)
             # Edge case for terminal state.
@@ -182,10 +154,10 @@ class MdpFiniteHorizonV0():
                               1.0), np.sum(self.transitions[0][idx_curr])
 
     def _fill_trans_other(self):
-        iter_states = self.get_iter_states()
+        iter_states = self._get_iter_states()
         for state in iter_states:
             (t, v, r), state_curr, idx_curr = self._breakdown_state(state)
-            # 1 up to number of fossil fuel plants remaining may be converted.
+            # 1 up to number of FF plants remaining may be converted.
             for a in np.arange(1, self.A):
                 # Transition doesn't matter for last year as long as it exists.
                 if t == self.n_years:
@@ -216,25 +188,44 @@ class MdpFiniteHorizonV0():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                cost = self._calc_cost(t, v, r, a)
+                cost = self._calc_total_cost(t, v, r, a)
                 # Model reward as negative cost.
                 self.rewards[idx][a] = -1 * cost
 
-    def _calc_cost(self, t, v, r, a):
+    # COST FUNCTION
+
+    def _calc_total_cost(self, t, v, r, a):
         if a + r > self.n_plants:
             return np.inf
-        carbontax = self.c_co2_init * ((1+self.co2_inc) ** t)
-        hoursyr = 24*52*365
-        cost_ff_emit = self.ff_emit*self.plant_size*self.plant_capacity*hoursyr*carbontax
-        cost_fplants = (self.n_plants-a) * (self.c_om_ff*self.plant_size + cost_ff_emit)
-        # Assume renewable plants cost nothing after construction.
-        cost_rplants = a*self.c_cap_res[v]*self.plant_size
-        total = (cost_rplants+cost_fplants) / 1e6
+        carbontax = self.c_co2_init * ((1+self.co2_inc)**t)
+        hours_yr = 24*365
+        # kW per plant should be the same for RES and FF plants.
+        kw_plant = self.rplant_size*self.rplant_capacity
+        total_ff_emit = self.ff_emit*kw_plant*hours_yr
+        c_om_ff = self.c_ff_fix*kw_plant + self.c_ff_var*kw_plant*hours_yr
+        c_fplants = (self.n_plants-a) * (c_om_ff + total_ff_emit*carbontax)
+        # Assume RES plants have no O&M costs.
+        c_rplants = a*self.c_res_cap[v]*kw_plant
+        c_bss = self._calc_bss_cost(v, r, a)
+        total = (c_fplants+c_rplants+c_bss)/1e6
         return round(total)
+
+    def _calc_bss_cost(self, v, r, a):
+        hours1yr = 24*365
+        total_sys_kw = self.rplant_size*self.rplant_capacity*10
+        # Additional storage capacity needed as percentage of total system load.
+        kw_req = (self._calc_bss_kw(r, a) - self._calc_bss_kw(r, 0))/100 * total_sys_kw
+        c_om_bss = self.c_bss_fix*kw_req + self.c_bss_var*kw_req*hours1yr
+        total_c_bss_cap = self.c_bss_cap[v]*kw_req
+        return round(c_om_bss+total_c_bss_cap)
+
+    def _calc_bss_kw(self, r, a):
+        res_penetration = (r+a) / self.n_plants
+        return 0.00016 * np.exp(10.496*res_penetration) + 0.0145
 
     # HELPER FUNCTIONS
 
-    def get_iter_states(self):
+    def _get_iter_states(self):
         return it.product(np.arange(self.n_years+1),
                           np.arange(self.n_tech_stages),
                           np.arange(self.n_plants+1))
@@ -245,9 +236,13 @@ class MdpFiniteHorizonV0():
         idx_curr = self.state_to_id[state_curr]
         return ((t, v, r), state_curr, idx_curr)
 
+    def _normalize_trans_row(self, state_curr, a):
+        idx_curr = self.state_to_id[state_curr]
+        self.transitions[a][idx_curr] = self.transitions[a][idx_curr] / np.sum(self.transitions[a][idx_curr])
+
     def _loop_failure(self, state, a_actual, a):
         (t, v, r), state_curr, idx_curr = self._breakdown_state(state)
-        # Any number of existing renewable plants may fail (at end of year).
+        # Any number of existing RES plants may fail (at end of year).
         for e in np.arange(r+1):
             prob_fail = binom.pmf(e, r, self.p_rplant_fail)
             plants_next = r-e+a_actual
@@ -263,7 +258,3 @@ class MdpFiniteHorizonV0():
             else:
                 # Tech stage must remain the same.
                 self.transitions[a][idx_curr][idx_next] = prob_fail
-
-    def _normalize_trans_row(self, state_curr, a):
-        idx_curr = self.state_to_id[state_curr]
-        self.transitions[a][idx_curr] = self.transitions[a][idx_curr] / np.sum(self.transitions[a][idx_curr])
