@@ -43,7 +43,7 @@ Faculty: Milind Tambe
 - `p_rplant_fail`: Probability that a RES plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
 - `disc_rate`: Discount rate (avg of solar PV and onshore wind rates in North America).
 
-Not all variables are present in any MDP model version. Note that in MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and `c_ff_var` was assumed to be 0.
+The following table describes which variables are passed in as parameters to each model version.
 
 | Variable          | v0 | v1 | v2 |
 | ----------------- | -- | -- | -- |
@@ -69,6 +69,8 @@ Not all variables are present in any MDP model version. Note that in MDP v0, the
 | p_rplant_fail     | X  | X  |    |
 | disc_rate         | X  | X  | X  |
 
+NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and `c_ff_var` is assumed to be 0.
+
 ## Models
 
 Markov Decision Problem (MDP) models using the Finite Horizon optimal policy algorithm. Built using Python's MDP Toolbox. 
@@ -90,7 +92,7 @@ UNIVERSAL ASSUMPTIONS:
 - RES construction incurs zero CO2 emissions.
 - Cost of replacing failed RES power plant is equal to cost of building new plant in current tech stage.
 
-Model version specific assumptions are noted below.
+NOTE: Model version specific assumptions are noted below.
 
 ### MDP v0
 
@@ -116,7 +118,10 @@ v1 ASSUMPTIONS:
 In this version, plant failure is modeled differently because failing BSS alongside RES plants is unrealistic. Instead of needing to rebuilt, RES plants now have an operation & maintenance cost that represents renewing some portion of the plant each year. The function for calculating BSS size is parametrized in this version.  
 
 v2 ASSUMPTIONS:
+- Storage capacity required grows exponentially with percent RES penetration.
+- Construction costs of BSS combine energy vs. power dependent costs.
 - RES power plant lifetime (and resulting need for replacement) can be modeled as an additional O&M cost equal to capital cost scaled by RES plant lifetime.
+- All BSS costs based on 4h li-ion battery system.
 
 ## Running MDP
 
@@ -134,8 +139,11 @@ In the output file, the state is always written as `(t, v, r)`, where `t` is cur
 
 To see a breakdown of cost in any of the MDP model versions 2+, use similar .txt file for parameters and output as above. Two matrices will be printed to the output file: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
 
-Run the following command, specifying the model_version, params_file, and output_file options as above. The final option, component, may be one of the following choices (note that these are calculated as system totals, not per plant):
+Run the following command, specifying the model_version, params_file, and output_file options as above. The final option, component, may be one of the following choices:
+- rplants_total: total cost of RES plants
 - rplants_cap: capital cost of RES plants
+- rplants_replace: failure/renewal cost of RES plants
+- fplants_total: total cost of FF plants
 - fplants_OM: operation & maintenance cost of FF plants
 - fplants_OM_fix: fixed operation & maintenance cost of FF plants
 - fplants_OM_var: variable operation & maintenance cost of FF plants.
@@ -149,5 +157,7 @@ Run the following command, specifying the model_version, params_file, and output
 ```
 $ python calculate_partial_costs -m [model_version] -p [params_file] -o [output_file] -c [component]
 ```
+
+NOTE: All cost components calculated as system totals, not per plant.
 
 In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
