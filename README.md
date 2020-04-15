@@ -24,10 +24,10 @@ Faculty: Milind Tambe
 - `n_years`: Total time period (number of steps).
 - `n_tech_stages`: Number of technological advancement stages it is possible to pass through.
 - `n_plants`: Total number of power plants. All begin as FF plants and can be converted to RES plants.
-- `fplant_size`: Nameplate capacity of single FF plant. 
+- `fplant_size`: Nameplate capacity of single FF plant in kW.
 - `fplant_capacity`: Capacity factor of single FF plant.
 - `rplant_capacity`: Capacity factor of single RES plant. 
-- `rplant_size`: Nameplate capacity of RES plant can be calculated from given plant size/capacity parameters.
+- `rplant_size`: Nameplate capacity of RES plant in kW can be calculated from given plant size/capacity parameters.
 - `rplant_lifetime`: Number of years that a single RES power plant can run before needing renewal/reconstruction. 
 - `c_co2_init`: Starting price of carbon per ton.
 - `co2_inc`: Increment of carbon tax as percent per year.
@@ -146,9 +146,10 @@ Run the following command, specifying the model_version, params_file, and output
 - fplants_total: total cost of FF plants
 - fplants_OM: operation & maintenance cost of FF plants
 - fplants_OM_fix: fixed operation & maintenance cost of FF plants
-- fplants_OM_var: variable operation & maintenance cost of FF plants.
+- fplants_OM_var: variable operation & maintenance cost of FF plants
 - co2_emit: CO2 emissions from FF plants
 - co2_tax: carbon tax incurred by FF plants
+- storage_total: total cost of BSS
 - storage_cap: capital cost of BSS
 - storage_OM: operation & maintenance cost of BSS
 - storage_OM_fix: fixed operation & maintenance cost of BSS
