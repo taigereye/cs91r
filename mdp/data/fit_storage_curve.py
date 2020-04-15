@@ -22,9 +22,6 @@ def main(argv):
     df = opts[0][1]
     with open(df, 'r') as datafile:
         data = pd.read_csv(datafile, names=['x', 'y'], header=None)
-    
-    data.x *= 100
-    data.y *= 100
 
     coef_names = ['a', 'b', 'c']
     coefs, coef_covs = curve_fit(exp_func, data.x, data.y, bounds=(1e-6, np.inf))

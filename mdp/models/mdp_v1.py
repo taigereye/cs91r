@@ -87,7 +87,7 @@ class MdpFiniteHorizonV1():
         self.rewards = None
 
     def initialize(self):
-        print("Initializing MDP v1...\n")
+        print("\nInitializing MDP v1...\n")
         self._enumerate_states()
         self._trans_probs_wrapper()
         self._rewards_wrapper()
@@ -112,13 +112,13 @@ class MdpFiniteHorizonV1():
         assert self.mdp_inst is not None
         print("OPTIMAL POLICY:\nState\t     Time")
         for row, state in zip(self.mdp_inst.policy, self._get_iter_states()):
-            print(state, ": ", row)
+            print("%s: [%s]" % (state, ''.join('%03s' % i for i in row)))
 
     def print_rewards(self):
         assert self.mdp_inst is not None
         print("REWARDS MATRIX:")
         for row, state in zip(self.rewards, self._get_iter_states()):
-            print(state, ": ", row)
+            print("%s: [%s]" % (state, ''.join('%07s' % i for i in row)))
 
     # STATE SPACE
 

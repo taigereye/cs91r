@@ -145,7 +145,7 @@ class MdpFiniteHorizonV0():
         assert self.mdp_fh is not None
         print("OPTIMAL POLICY:\nState\t     Time")
         for row, state in zip(self.mdp_fh.policy, self.get_iter_states()):
-            print(state, ": ", row)
+            print("%s: [%s]" % (state, ''.join('%03s' % i for i in row)))
 
     # STATE SPACE
 

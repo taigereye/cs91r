@@ -34,11 +34,9 @@ def main(argv):
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
-
     mdp_fh = mdp_model.run_fh(params)
-    stdout_og = sys.stdout
-    np.set_printoptions(linewidth=200)
 
+    stdout_og = sys.stdout
     runs_dir = Path("results/runs_v" + version)
     of = runs_dir / opts[2][1]
     outfile = open(of, 'w+')

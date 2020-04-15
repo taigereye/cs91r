@@ -1,7 +1,6 @@
 import getopt
 import sys
 
-import numpy as np
 from pathlib import Path
 
 from mdp.models.mdp_v2 import MdpFiniteHorizonV2
@@ -12,15 +11,16 @@ def main(argv):
         opts, args = getopt.getopt(argv, "m:p:o:c:")
     except getopt.GetoptError:
         print('usage: calc_partial_costs.py -m <modelversion> -p <paramsfile> -o <outputfile> -c <component>')
-        sys.exit(2)
+        sys.exit(1)
 
     version = str(opts[0][1])
     if int(version) < 2:
-        raise ValueError("calc_partial_costs only supported for MDP v2 or higher.")
+        print("error: calc_partial_costs only supported for MDP v2 or higher.")
+        sys.exit(2)
 
     component = str(opts[3][1])
 
-    params_dir = Path("results/params_v" + version)
+    params_dir = Path("results/params_v" + version + "/")
     pf = params_dir / opts[1][1]
     with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
@@ -33,9 +33,7 @@ def main(argv):
     assert(mdp_fh is not None)
 
     stdout_og = sys.stdout
-    np.set_printoptions(linewidth=300)
-
-    costs_dir = Path("results/costs_v" + version)
+    costs_dir = Path("results/costs_v" + version + "/")
     of = costs_dir / opts[2][1]
     outfile = open(of, 'w+')
     sys.stdout = outfile

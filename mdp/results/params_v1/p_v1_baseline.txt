@@ -1,5 +1,5 @@
 {
-'n_years': 50,
+'n_years': 30,
 'n_tech_stages': 3,
 'n_plants': 10,
 'fplant_size': 600000,
