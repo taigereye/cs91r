@@ -130,7 +130,7 @@ To run any of the MDP model versions implemented, first create a .txt file conta
 Run the following command, specifying the model version and passing in the .txt file for parameters. Any file name may be used for the output file, which is where the parameters used and optimal policy produced after running the MDP will be printed.
 
 ```
-$ python run_mdp_fh -m [model_version] -p [params_file] -o [output_file]
+$ python run_mdp_fh.py -m [model_version] -p [params_file] -o [output_file]
 ```
 
 In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
@@ -155,7 +155,7 @@ Run the following command, specifying the model_version, params_file, and output
 - storage_OM_var: variable operation & maintenance cost of BSS
 
 ```
-$ python calculate_partial_costs -m [model_version] -p [params_file] -o [output_file] -c [component]
+$ python calc_partial_costs.py -m [model_version] -p [params_file] -o [output_file] -c [component]
 ```
 
 NOTE: All cost components calculated as system totals, not per plant.
