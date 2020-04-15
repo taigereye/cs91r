@@ -158,6 +158,6 @@ Run the following command, specifying the model_version, params_file, and output
 $ python calc_partial_costs.py -m [model_version] -p [params_file] -o [output_file] -c [component]
 ```
 
-NOTE: All cost components calculated as system totals, not per plant.
+NOTE: All cost components calculated as system totals, not per plant. For invalid actions, absolute costs are displayed as infinity and percentages as -1.0.
 
 In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
