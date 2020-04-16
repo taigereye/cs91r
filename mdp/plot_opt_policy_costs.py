@@ -13,12 +13,12 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "m:p:v:")
     except getopt.GetoptError:
-        print('usage: graph_opt_policy_costs.py -m <modelversion> -p <paramsfile> -v <techstage>')
+        print('usage: plot_opt_policy_costs.py -m <modelversion> -p <paramsfile> -v <techstage>')
         sys.exit(1)
 
     version = str(opts[0][1])
     if int(version) < 1:
-        print("error: graph_opt_policy_costs only supported for MDP v2 or higher.")
+        print("error: plot_opt_policy_costs only supported for MDP v2 or higher.")
         sys.exit(2)
 
     params_dir = Path("results/params_v" + version + "/")
@@ -37,7 +37,7 @@ def main(argv):
 
     v = int(opts[2][1])
     if v < 0 or v >= mdp_fh.n_tech_stages:
-        print("error: graph_opt_policy_costs only supported for MDP v2 or higher.")
+        print("error: plot_opt_policy_costs only supported for MDP v2 or higher.")
         sys.exit(2)
 
     np.set_printoptions(linewidth=300)
@@ -48,6 +48,8 @@ def main(argv):
     policy = mdplt.get_opt_policy_trajectory(mdp_fh, v)
     fig_breakdown = mdplt.cost_breakdown(mdp_fh, v, policy, policy_type)
     fig_breakdown.savefig(visuals_dir / "opt_policy_{}_cost_breakdown_{}.png".format(pf_name, v))
+    fig_percents = mdplt.cost_breakdown(mdp_fh, v, policy, policy_type, percent=True)
+    fig_percents.savefig(visuals_dir / "opt_policy_{}_cost_percents_{}.png".format(pf_name, v))
     fig_total = mdplt.total_cost(mdp_fh, v, policy, policy_type)
     fig_total.savefig(visuals_dir / "opt_policy_{}_total_cost_{}.png".format(pf_name, v))
     plt.show()

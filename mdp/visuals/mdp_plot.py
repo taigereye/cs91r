@@ -52,8 +52,11 @@ def plot_single_bar(x, y, x_label, y_label, title, bar_labels=None):
     return fig
 
 
-def plot_stacked_bar(x, y_all, x_label, y_label, title, legend_labels, colors):
+def plot_stacked_bar(x, y_all, x_label, y_label, title, legend_labels, colors, percent=False):
     fig, ax = plt.subplots()
+    if percent:
+        y_total = np.array([sum(y) for y in zip(*y_all)])
+        y_all = [y/y_total for y in y_all]
     ax.bar(x, y_all[0], width=0.20, label=legend_labels[0])
     for i in np.arange(1, len(y_all)):
         y = y_all[i]
@@ -76,7 +79,7 @@ def total_cost_by_rplants(mdp_fh, r, v):
         for y in y_rplants:
             y[0] = 0
     x_label = "Time (years)"
-    y_label = "RES plants built in 1 year"
+    y_label = "Cost (USD)"
     title = "Total Cost Given {} RES Plants".format(r)
     legend_labels = [str(i) for i in np.arange(mdp_fh.n_plants-r)]
     return plot_multiple_bar(x, y_rplants, x_label, y_label, title, legend_labels, COLORS)
@@ -92,13 +95,13 @@ def cost_component_by_rplants(mdp_fh, r, v, component):
         for y in y_rplants:
             y[0] = 0
     x_label = "Time (years)"
-    y_label = "RES plants built in 1 year"
+    y_label = "Cost (USD)"
     title = "Cost Component: {} Given {} RES Plants".format(component, r)
     legend_labels = [str(i) for i in np.arange(mdp_fh.n_plants-r)]
     return plot_multiple_bar(x, y_rplants, x_label, y_label, title, legend_labels, COLORS)
 
 
-def cost_breakdown(mdp_fh, v, policy, policy_type):
+def cost_breakdown(mdp_fh, v, policy, policy_type, percent=False):
     x = np.arange(1, mdp_fh.n_years+1)
     components = ["fplants_OM", "co2_tax", "rplants_cap", "rplants_replace", "storage_cap", "storage_OM"]
     y_components = []
@@ -106,9 +109,11 @@ def cost_breakdown(mdp_fh, v, policy, policy_type):
         y = np.array([mdp_fh.calc_partial_cost(t, v, r, a, component) for (t, v, r, a) in policy])
         y_components.append(y)
     x_label = "Time (years)"
-    y_label = "Cost (million USD)"
+    y_label = "Cost (USD)"
+    if percent:
+        y_label = "Cost (%)"
     title = "{} Cost Breakdown".format(policy_type)
-    return plot_stacked_bar(x, y_components, x_label, y_label, title, components, COLORS)
+    return plot_stacked_bar(x, y_components, x_label, y_label, title, components, COLORS, percent)
 
 
 def cost_by_component(mdp_fh, v, policy, policy_type, component):
@@ -117,7 +122,7 @@ def cost_by_component(mdp_fh, v, policy, policy_type, component):
     totals = np.array([mdp_fh.calc_total_cost(t, v, r, a) for (t, v, r, a) in policy])
     percents = y*100 / totals
     x_label = "Time (years)"
-    y_label = "Cost (million USD)"
+    y_label = "Cost (USD)"
     title = "{} Cost Component: {}".format(policy_type, component)
     return plot_single_bar(x, y, x_label, y_label, title, percents)
 
@@ -127,6 +132,6 @@ def total_cost(mdp_fh, v, policy, policy_type):
     y = np.array([mdp_fh.calc_total_cost(t, v, r, a) for (t, v, r, a) in policy])
     fig, ax = plt.subplots()
     x_label = "Time (years)"
-    y_label = "Cost (million USD)"
+    y_label = "Cost (USD)"
     title = "{} Total Cost".format(policy_type)
     return plot_single_bar(x, y, x_label, y_label, title)
