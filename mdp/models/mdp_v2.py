@@ -44,7 +44,10 @@ class MdpModelV2():
     def print_fh(self, mdp_fh):
         assert(mdp_fh is not None)
         mdp_fh.print_params()
+        print("\n")
         mdp_fh.print_policy()
+        print("\n")
+        mdp_fh.print_rewards()
 
     def create_params(self, param_list):
         params = OrderedDict()
@@ -110,7 +113,6 @@ class MdpFiniteHorizonV2():
         print("PARAMETERS:")
         for k, v in self.params.items():
             print("%s: %s" % (k, v))
-        print("\n")
 
     def print_policy(self):
         assert self.mdp_inst is not None
@@ -136,14 +138,14 @@ class MdpFiniteHorizonV2():
             raise ValueError("Invalid component type. Expected one of %s" % components)
         costs, percents = self._fill_partial_costs(component)
         print("COST MATRIX: %s\nState\t     Time" % component)
-        self._print_labeled_matrix(costs, precision=3)
+        self._print_labeled_matrix(costs, to_round=True)
         print("\n\nPERCENTAGE MATRIX: %s\nState\t     Time" % component)
         self._print_labeled_matrix(percents, precision=2)
 
     def print_rewards(self):
         assert self.mdp_inst is not None
         print("REWARDS MATRIX:")
-        self._print_labeled_matrix(self.rewards, precision=3)
+        self._print_labeled_matrix(self.rewards, to_round=True)
 
     # STATE SPACE
 
@@ -213,7 +215,7 @@ class MdpFiniteHorizonV2():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                cost = self._calc_total_cost(t, v, r, a)
+                cost = self.calc_total_cost(t, v, r, a)
                 if cost < np.inf:
                     cost /= self.scale_down
                 # Model reward as negative cost.
@@ -221,7 +223,7 @@ class MdpFiniteHorizonV2():
 
     # COST FUNCTION
 
-    def _calc_total_cost(self, t, v, r, a):
+    def calc_total_cost(self, t, v, r, a):
         if a + r > self.n_plants:
             return np.inf
         f = self.n_plants-(r+a)
@@ -263,7 +265,7 @@ class MdpFiniteHorizonV2():
         bss_percent = self.bss_coefs[0] * np.exp(self.bss_coefs[1]*res_percent) + self.bss_coefs[2]
         return bss_percent/100*kw_sys_total*hours_yr
 
-    def _calc_partial_cost(self, t, v, r, a, component):
+    def calc_partial_cost(self, t, v, r, a, component):
         cost = 0
         f = self.n_plants-(r+a)
         if f < 0:
@@ -321,13 +323,13 @@ class MdpFiniteHorizonV2():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                costs[idx][a] = self._calc_partial_cost(t, v, r, a, component)
+                costs[idx][a] = self.calc_partial_cost(t, v, r, a, component)
                 # Keep cost positive to save printing space.
                 if costs[idx][a] == np.inf:
                     percents[idx][a] = np.inf
                 else:
                     costs[idx][a] /= self.scale_down
-                    percents[idx][a] = (costs[idx][a]*100) / self._calc_total_cost(t, v, r, a)
+                    percents[idx][a] = (costs[idx][a]*100) / self.calc_total_cost(t, v, r, a)
         return costs, percents
 
     def _get_iter_states(self):
@@ -339,12 +341,15 @@ class MdpFiniteHorizonV2():
         idx_curr = self.state_to_id[state_curr]
         self.transitions[a][idx_curr] = self.transitions[a][idx_curr] / np.sum(self.transitions[a][idx_curr])
 
-    def _print_labeled_matrix(self, matrix, linewidth=300, precision=3):
-        np.set_printoptions(linewidth=linewidth, precision=precision, suppress=True, floatmode="fixed")
+    def _print_labeled_matrix(self, matrix, to_round=False, linewidth=300, precision=3):
+        np.set_printoptions(linewidth=linewidth, precision=precision, floatmode='maxprec')
         for row, state in zip(matrix, self._get_iter_states()):
             (t, v, r) = state
             print("({:02d},{:d},{:02d}) : ".format(t, v, r), end="")
-            print(row)
+            if to_round:
+                print(np.array([round(i) for i in row]))
+            else:
+                print(row)
 
     def _round_sig_figs(self, num, sig_figs):
         if num == 0:

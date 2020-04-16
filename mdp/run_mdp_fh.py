@@ -1,7 +1,6 @@
 import getopt
 import sys
 
-import numpy as np
 from pathlib import Path
 
 from mdp.models.mdp_v0 import MdpModelV0
@@ -36,12 +35,15 @@ def main(argv):
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
 
-    stdout_og = sys.stdout
     runs_dir = Path("results/runs_v" + version)
     of = runs_dir / opts[2][1]
     outfile = open(of, 'w+')
+
+    stdout_og = sys.stdout
     sys.stdout = outfile
+
     mdp_model.print_fh(mdp_fh)
+
     sys.stdout = stdout_og
     outfile.close()
 

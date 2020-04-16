@@ -1,7 +1,6 @@
 import getopt
 import sys
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,6 +22,9 @@ def main(argv):
     with open(df, 'r') as datafile:
         data = pd.read_csv(datafile, names=['x', 'y'], header=None)
 
+    data.x *= 100
+    data.y *= 100
+
     coef_names = ['a', 'b', 'c']
     coefs, coef_covs = curve_fit(exp_func, data.x, data.y, bounds=(1e-6, np.inf))
 
@@ -35,9 +37,9 @@ def main(argv):
     ax.plot(np.arange(0, 100), np.apply_along_axis(exp_func, 0, np.arange(0, 100), *coefs), color='b')
     ax.set(xlabel="Renewable Penetration (%)", ylabel="Storage Capacity (% total load)")
     ax.grid()
-
-    fig.savefig(df.split('.')[0] + ".png")
     plt.show()
+    fig.savefig(df.split('.')[0] + ".png")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

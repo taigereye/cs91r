@@ -20,7 +20,7 @@ def main(argv):
 
     component = str(opts[3][1])
 
-    params_dir = Path("results/params_v" + version + "/")
+    params_dir = Path("results/params_v" + version)
     pf = params_dir / opts[1][1]
     with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
@@ -32,12 +32,15 @@ def main(argv):
 
     assert(mdp_fh is not None)
 
-    stdout_og = sys.stdout
-    costs_dir = Path("results/costs_v" + version + "/")
+    costs_dir = Path("results/costs_v" + version)
     of = costs_dir / opts[2][1]
     outfile = open(of, 'w+')
+
+    stdout_og = sys.stdout
     sys.stdout = outfile
+
     mdp_fh.print_partial_costs(component)
+
     sys.stdout = stdout_og
     outfile.close()
 
