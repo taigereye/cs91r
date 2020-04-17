@@ -193,8 +193,8 @@ Run the following command, specifying the model version, tech stage (which remai
 $ python plot_opt_policy_costs.py -m <model_version> -p <params_file> -v <tech_stage>
 ```
 
-To generate the same three plots for an arbitrary policy, run the following command, specifying the model version, tech stage, and parameters file as above, as well as the policy file. Note that this command will calculate costs for the entire policy relative to a single tech stage, unlike the optimal policy above.   
+To generate the same three plots for an arbitrary policy, run the following command, specifying the model version, tech stage, and parameters file as above, as well as the policy file. As above, the tech stage remains fixed after which costs are calculated.    
 
 ```
-$ python plot_other_policy_costs.py -m <model_version> -p <params_file> -a <policyfile> -v <tech_stage>
+$ python plot_arb_policy_costs.py -m <model_version> -p <params_file> -a <policyfile> -v <tech_stage>
 ```
