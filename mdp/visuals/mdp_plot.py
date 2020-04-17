@@ -45,6 +45,8 @@ def plot_single_bar(x, y, x_label, y_label, title, bar_labels=None):
     ax.bar(x, y, width=0.20, color='b')
     if bar_labels:
         label_bars_above(ax.patches, bar_labels, ax)
+    if np.max(y) > 1e6:
+        ax.set_yscale('log')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.grid()
     ax.set_title(title)
@@ -55,41 +57,21 @@ def plot_stacked_bar(x, y_all, x_label, y_label, title, legend_labels, colors, p
     def roundit(x):
         return round(x)
     fig, ax = plt.subplots()
+    y_total = np.sum(y_all, axis=0)
     if percent:
-        y_total = np.sum(y_all, axis=0)
         y_all = y_all / y_total
     ax.bar(x, y_all[0], width=0.20, label=legend_labels[0], color=colors[0])
     for i in np.arange(1, len(y_all)):
         ax.bar(x, y_all[i], width=0.20, bottom=np.sum(y_all[0:i], axis=0),
                label=legend_labels[i], color=colors[i])
+    if np.max(y_total) > 1e6 and not percent:
+        ax.set_yscale('log')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.grid()
     ax.legend(loc='upper left')
     ax.set_title(title)
     return fig
 
-def test():
-    fig, ax = plt.subplots()
-    x = np.arange(4)
-    y_all = np.stack([np.array([0, 0, 0, 0,]),
-                      np.array([1, 0, 1, 0]),
-                      np.array([1, 0, 0, 1]),
-                      np.array([1, 1, 1, 1])], axis=0)
-    print("\ny_all: ", y_all)
-    if True:
-        y_total = np.sum(y_all, axis=0)
-        print("\ny_total: ", y_total)
-        y_all = y_all / y_total
-        print("\ny_all scaled: ", y_all)
-    ax.bar(x, y_all[0], width=0.20, color=COLORS[0])
-    for i in np.arange(1, len(y_all)):
-        ax.bar(x, y_all[i], width=0.20, bottom=y_all[i-1], color=COLORS[i])
-    ax.set(xlabel="x_label", ylabel="y_label")
-    ax.grid()
-    ax.legend(loc='upper left')
-    ax.set_title("title")
-    return fig
-    plt.show()
 
 def add_state_to_policy(policy, v):
     n_years = len(policy)

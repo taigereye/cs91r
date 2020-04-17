@@ -43,7 +43,7 @@ def main(argv):
     policy = mdplt.get_opt_policy_trajectory(mdp_fh, v)
 
     np.set_printoptions(linewidth=300)
-    visuals_dir = Path("visuals/v{}".format(version))
+    visuals_dir = Path("visuals/v{}/plots".format(version))
     policy_type = "Optimal Policy"
 
     fig_breakdown = mdplt.cost_breakdown(mdp_fh, v, policy, policy_type)
