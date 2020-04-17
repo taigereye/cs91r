@@ -17,8 +17,8 @@ def main(argv):
 
     version = str(opts[0][1])
 
-    params_dir = Path("results/params_v" + version)
-    pf = params_dir / opts[1][1]
+    params_dir = Path("results/v{}/params".format(version))
+    pf = params_dir / "p_v{}_{}.txt".format(version, opts[1][1])
     with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
     paramsfile.close()
@@ -35,8 +35,8 @@ def main(argv):
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
 
-    runs_dir = Path("results/runs_v" + version)
-    of = runs_dir / opts[2][1]
+    runs_dir = Path("results/v{}/runs".format(version))
+    of = runs_dir / "r_v{}_{}.txt".format(version, opts[2][1])
     outfile = open(of, 'w+')
 
     stdout_og = sys.stdout

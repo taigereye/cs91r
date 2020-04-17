@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcols
 import numpy as np
 
-COLORS = mcols.TABLEAU_COLORS
+COLORS = list(mcols.TABLEAU_COLORS.values())
 
 
 def label_bars_above(rects, bar_labels, ax):
@@ -15,28 +15,27 @@ def label_bars_above(rects, bar_labels, ax):
 
 def get_opt_policy_trajectory(mdp_fh, v):
     opt_policy = mdp_fh.mdp_inst.policy
-    actions = []
+    policy_annotated = []
     t = 0
     r = 0
     for step in np.arange(0, mdp_fh.n_years):
         state = (t, v, r)
         idx = mdp_fh.state_to_id[state]
         a = opt_policy[idx][step]
-        actions.append((t, v, r, a))
+        policy_annotated.append((t, v, r, a))
         t += 1
         r += a
-    return actions
+    return policy_annotated
 
 
 def plot_multiple_bar(x, y_all, x_label, y_label, title, legend_labels, colors):
     fig, ax = plt.subplots()
     for i in range(len(y_all)):
-        y = y_all[i]
-        c = colors[i]
-        ax.bar(x+(0.1*i), y, width=0.10, color=c)
+        ax.bar(x+(0.1*i), y_all[i], width=0.10,
+               label=legend_labels[i], color=colors[i])
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.grid()
-    ax.legend()
+    ax.legend(loc='upper left')
     ax.set_title(title)
     return fig
 
@@ -53,20 +52,57 @@ def plot_single_bar(x, y, x_label, y_label, title, bar_labels=None):
 
 
 def plot_stacked_bar(x, y_all, x_label, y_label, title, legend_labels, colors, percent=False):
+    def roundit(x):
+        return round(x)
     fig, ax = plt.subplots()
     if percent:
-        y_total = np.array([sum(y) for y in zip(*y_all)])
-        y_all = [y/y_total for y in y_all]
-    ax.bar(x, y_all[0], width=0.20, label=legend_labels[0])
+        y_total = np.sum(y_all, axis=0)
+        y_all = y_all / y_total
+    ax.bar(x, y_all[0], width=0.20, label=legend_labels[0], color=colors[0])
     for i in np.arange(1, len(y_all)):
-        y = y_all[i]
-        label = legend_labels[i]
-        ax.bar(x, y, width=0.20, bottom=y_all[i-1], label=label)
+        ax.bar(x, y_all[i], width=0.20, bottom=np.sum(y_all[0:i], axis=0),
+               label=legend_labels[i], color=colors[i])
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.grid()
-    ax.legend()
+    ax.legend(loc='upper left')
     ax.set_title(title)
     return fig
+
+def test():
+    fig, ax = plt.subplots()
+    x = np.arange(4)
+    y_all = np.stack([np.array([0, 0, 0, 0,]),
+                      np.array([1, 0, 1, 0]),
+                      np.array([1, 0, 0, 1]),
+                      np.array([1, 1, 1, 1])], axis=0)
+    print("\ny_all: ", y_all)
+    if True:
+        y_total = np.sum(y_all, axis=0)
+        print("\ny_total: ", y_total)
+        y_all = y_all / y_total
+        print("\ny_all scaled: ", y_all)
+    ax.bar(x, y_all[0], width=0.20, color=COLORS[0])
+    for i in np.arange(1, len(y_all)):
+        ax.bar(x, y_all[i], width=0.20, bottom=y_all[i-1], color=COLORS[i])
+    ax.set(xlabel="x_label", ylabel="y_label")
+    ax.grid()
+    ax.legend(loc='upper left')
+    ax.set_title("title")
+    return fig
+    plt.show()
+
+def add_state_to_policy(policy, v):
+    n_years = len(policy)
+    t = 0
+    r = 0
+    policy_annotated = [(t, v, r, policy[0])]
+    r += policy[0]
+    for step in np.arange(1, n_years):
+        a = policy[step]
+        policy_annotated.append((t, v, r, a))
+        t += 1
+        r += a
+    return policy_annotated
 
 
 def total_cost_by_rplants(mdp_fh, r, v):
@@ -78,11 +114,12 @@ def total_cost_by_rplants(mdp_fh, r, v):
     if r > 0:
         for y in y_rplants:
             y[0] = 0
+    y_all = np.stack(y_rplants, axis=0)
     x_label = "Time (years)"
     y_label = "Cost (USD)"
     title = "Total Cost Given {} RES Plants".format(r)
     legend_labels = [str(i) for i in np.arange(mdp_fh.n_plants-r)]
-    return plot_multiple_bar(x, y_rplants, x_label, y_label, title, legend_labels, COLORS)
+    return plot_multiple_bar(x, y_all, x_label, y_label, title, legend_labels, COLORS)
 
 
 def cost_component_by_rplants(mdp_fh, r, v, component):
@@ -94,11 +131,12 @@ def cost_component_by_rplants(mdp_fh, r, v, component):
     if r > 0:
         for y in y_rplants:
             y[0] = 0
+    y_all = np.stack(y_rplants, axis=0)
     x_label = "Time (years)"
     y_label = "Cost (USD)"
     title = "Cost Component: {} Given {} RES Plants".format(component, r)
     legend_labels = [str(i) for i in np.arange(mdp_fh.n_plants-r)]
-    return plot_multiple_bar(x, y_rplants, x_label, y_label, title, legend_labels, COLORS)
+    return plot_multiple_bar(x, y_all, x_label, y_label, title, legend_labels, COLORS)
 
 
 def cost_breakdown(mdp_fh, v, policy, policy_type, percent=False):
@@ -108,12 +146,13 @@ def cost_breakdown(mdp_fh, v, policy, policy_type, percent=False):
     for component in components:
         y = np.array([mdp_fh.calc_partial_cost(t, v, r, a, component) for (t, v, r, a) in policy])
         y_components.append(y)
+    y_all = np.stack(y_components, axis=0)
     x_label = "Time (years)"
     y_label = "Cost (USD)"
     if percent:
         y_label = "Cost (%)"
     title = "{} Cost Breakdown".format(policy_type)
-    return plot_stacked_bar(x, y_components, x_label, y_label, title, components, COLORS, percent)
+    return plot_stacked_bar(x, y_all, x_label, y_label, title, components, COLORS, percent)
 
 
 def cost_by_component(mdp_fh, v, policy, policy_type, component):
