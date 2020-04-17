@@ -1,4 +1,4 @@
-# Harvard CS91r
+# Harvard CS91r - 2020 Spring
 
 ## Summary
 
@@ -123,23 +123,45 @@ v2 ASSUMPTIONS:
 - RES power plant lifetime (and resulting need for replacement) can be modeled as an additional O&M cost equal to capital cost scaled by RES plant lifetime.
 - All BSS costs based on 4h li-ion battery system.
 
-## Running MDP
+## Results and Visuals
 
-To run any of the MDP model versions implemented, first create a .txt file containing the parameters for the appropriate version model in Python dictionary format. Any parameters that depend on tech stage should be written as a tuple of length `n_techstages`. 
+The repo structure for results and visuals, with example filenames, is as follows:
+- mdp/
+  - results/
+    - v2/
+      - costs/
+        - c_v2_baseline.txt
+      - params/
+        - p_v2_baseline.txt
+      - runs/
+        - r_v2_baseline.txt
+  - visuals/
+    - v2
+      - plots/
+        - g_v2_opt_policy_total_cost_baseline_0.txt
+      - policies/
+        - a_v2_one_per_third_year.txt
 
-Run the following command, specifying the model version and passing in the .txt file for parameters. Any file name may be used for the output file, which is where the parameters used and optimal policy produced after running the MDP will be printed.
+To run the commands below, first create a .txt file for the parameters or policy as needed. Parameters must be written in Python dictionary format (make sure that the dictionary matches the parameter list of the appropriate MDP model version). Any parameters that depend on tech stage should be written as a tuple of length `n_techstages`. Policies must be written in Python list (make sure the length matches `n_years` in the parameters passed in). The output file need not exist before running the command.
+
+For any commandline option that refers to a filename, pass in the root identifier. For example, to pass in the parameters file "p_v2_baseline.txt" simply use `-p baseline` instead of `-p p_v2_baseline.txt`. To pass in a matching output file, `-o baseline` should be used. Make sure that the files are named and located in this consistent format.
+
+NOTE: If applicable, in the output file the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
+
+
+### Running MDP
+
+Run the following command, specifying the model version, parameters file, and output file. After running, the output file should contain the optimal policy produced after running the MDP and the rewards matrix calculated for the given parameters.
 
 ```
-$ python run_mdp_fh.py -m [model_version] -p [params_file] -o [output_file]
+$ python run_mdp_fh.py -m <model_version> -p <params_file> -o <output_file>
 ```
 
-In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
+### Inspecting Cost
 
-## Inspecting Cost
+Use this command to calculate a breakdown of cost in any of the MDP model versions 2+. After running, the output file should contain two matrices: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
 
-To see a breakdown of cost in any of the MDP model versions 2+, use similar .txt file for parameters and output as above. Two matrices will be printed to the output file: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
-
-Run the following command, specifying the model_version, params_file, and output_file options as above. The final option, component, may be one of the following choices:
+Run the following command, specifying the model version, parameters file and output file as above.The final option, component, may be one of the following choices:
 - rplants_total: total cost of RES plants
 - rplants_cap: capital cost of RES plants
 - rplants_replace: failure/renewal cost of RES plants
@@ -156,9 +178,23 @@ Run the following command, specifying the model_version, params_file, and output
 - storage_OM_var: variable operation & maintenance cost of BSS
 
 ```
-$ python calc_partial_costs.py -m [model_version] -p [params_file] -o [output_file] -c [component]
+$ python calc_partial_costs.py -m <model_version> -p <params_file> -o <output_file> -c <component>
 ```
 
 NOTE: All cost components calculated as system totals, not per plant. For invalid actions, absolute costs are displayed as infinity and percentages as -1.0.
 
-In the output file, the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
+### Visualizing Cost
+
+Use this command to see the cost by year of following the optimal policy. 
+
+Run the following command, specifying the model version, tech stage (which remains fixed to reduce the number of dimensions), and parameters file. The generated plots will show 1) aggregate total cost by year, 2) absolute cost breakdown by year, and 3) percentage cost breakdown by year.
+
+```
+$ python plot_opt_policy_costs.py -m <model_version> -p <params_file> -v <tech_stage>
+```
+
+To generate the same three plots for an arbitrary policy, run the following command, specifying the model version, tech stage, and parameters file as above, as well as the policy file. As above, the tech stage remains fixed after which costs are calculated.    
+
+```
+$ python plot_arb_policy_costs.py -m <model_version> -p <params_file> -a <policyfile> -v <tech_stage>
+```
