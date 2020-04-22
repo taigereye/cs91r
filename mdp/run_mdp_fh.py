@@ -1,4 +1,4 @@
-import getopt
+import argparse
 import sys
 
 from pathlib import Path
@@ -9,34 +9,31 @@ from mdp.models.mdp_v2 import MdpModelV2
 
 
 def main(argv):
-    try:
-        opts, args = getopt.getopt(argv, "m:p:o:")
-    except getopt.GetoptError:
-        print('usage: run_mdp.py -m <modelversion> -p <paramsfile> -o <outputfile>')
-        sys.exit(2)
+    parser = argparse.ArgumentParser(description="run MDP instance")
+    parser.add_argument("-m", "--version", help="MDP model version", type=int)
+    parser.add_argument("-p", "--paramsfile", help="txt file with version specific params dict")
+    args = parser.parse_args()
 
-    version = str(opts[0][1])
-
-    params_dir = Path("results/v{}/params".format(version))
-    pf = params_dir / "p_v{}_{}.txt".format(version, opts[1][1])
+    params_dir = Path("results/v{}/params".format(args.version))
+    pf = params_dir / "p_v{}_{}.txt".format(args.version, args.paramsfile)
     with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
     paramsfile.close()
 
     mdp_model = None
-    if int(version) == 0:
+    if args.version == 0:
         mdp_model = MdpModelV0()
-    elif int(version) == 1:
+    elif args.version == 1:
         mdp_model = MdpModelV1()
-    elif int(version) == 2:
+    elif args.version == 2:
         mdp_model = MdpModelV2()
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
 
-    runs_dir = Path("results/v{}/runs".format(version))
-    of = runs_dir / "r_v{}_{}.txt".format(version, opts[2][1])
+    runs_dir = Path("results/v{}/runs".format(args.version))
+    of = runs_dir / "r_v{}_{}.txt".format(args.version, args.paramsfile)
     outfile = open(of, 'w+')
 
     stdout_og = sys.stdout

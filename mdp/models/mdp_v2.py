@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import itertools as it
 import numpy as np
-import math
 import mdptoolbox as mtb
 
 
@@ -11,20 +10,26 @@ class MdpModelV2():
         self.param_names = ['n_years',
                             'n_tech_stages',
                             'n_plants',
-                            'fplant_size',
-                            'fplant_capacity',
-                            'rplant_capacity',
-                            'rplant_lifetime',
+                            'ff_size',
+                            'ff_capacity',
+                            'ff_lifetime',
+                            'res_capacity',
+                            'res_lifetime',
                             'c_co2_init',
                             'co2_inc',
+                            'c_ff_cap',
                             'c_ff_fix',
                             'c_ff_var',
                             'ff_emit',
                             'c_res_cap',
-                            'bss_coefs',
+                            'storage_mix',
+                            'storage_coefs',
+                            'bss_hrs',
                             'c_bss_cap',
                             'c_bss_fix',
                             'c_bss_var',
+                            'c_phs_cap',
+                            'c_phs_fix',
                             'p_adv_tech_stage',
                             'disc_rate']
 
@@ -44,9 +49,9 @@ class MdpModelV2():
     def print_fh(self, mdp_fh):
         assert(mdp_fh is not None)
         mdp_fh.print_params()
-        print("\n")
+        print("\n\n")
         mdp_fh.print_policy()
-        print("\n")
+        print("\n\n")
         mdp_fh.print_rewards()
 
     def create_params(self, param_list):
@@ -61,26 +66,12 @@ class MdpFiniteHorizonV2():
         self.mdp_inst = None
         self.params = params
         self.scale_down = 9
+        # Cost
+        self.mdp_cost = MdpCostCalculatorV2(params)
         # Parameters
         self.n_years = params['n_years']
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
-        self.fplant_size = params['fplant_size']
-        self.fplant_capacity = params['fplant_capacity']
-        self.rplant_size = params['fplant_size']*params['fplant_capacity']/params['rplant_capacity']
-        self.rplant_capacity = params['rplant_capacity']
-        self.rplant_lifetime = params['rplant_lifetime']
-        self.c_co2_init = params['c_co2_init']
-        self.co2_inc = params['co2_inc']
-        self.c_ff_fix = params['c_ff_fix']
-        self.c_ff_var = params['c_ff_var']
-        self.ff_emit = params['ff_emit']
-        self.c_res_cap = params['c_res_cap']
-        self.bss_coefs = params['bss_coefs']
-        self.bss_hrs = 4
-        self.c_bss_cap = params['c_bss_cap']
-        self.c_bss_fix = params['c_bss_fix']
-        self.c_bss_var = params['c_bss_var']
         self.p_adv_tech_stage = params['p_adv_tech_stage']
         self.disc_rate = params['disc_rate']
         # Dimensions
@@ -110,36 +101,39 @@ class MdpFiniteHorizonV2():
         print("MDP done.\n")
 
     def print_params(self):
-        print("PARAMETERS:")
+        print("PARAMETERS:\n")
         for k, v in self.params.items():
             print("%s: %s" % (k, v))
 
     def print_policy(self):
         assert self.mdp_inst is not None
-        print("OPTIMAL POLICY:\nState\t     Time")
+        print("OPTIMAL POLICY:\n\nState\t     Time")
         self._print_labeled_matrix(self.mdp_inst.policy)
 
     def print_partial_costs(self, component):
-        components = ["rplants_total",
-                      "rplants_cap",
-                      "rplants_replace",
-                      "fplants_total",
-                      "fplants_OM",
-                      "fplants_OM_fix",
-                      "fplants_OM_var",
-                      "co2_emit",
+        components = ["co2_emit",
                       "co2_tax",
+                      "ff_total",
+                      "ff_replace",
+                      "ff_OM",
+                      "res_total",
+                      "res_cap",
+                      "res_replace",
+                      "bss_total",
+                      "bss_cap",
+                      "bss_om",
+                      "phs_total",
+                      "phs_cap",
+                      "phs_om",
                       "storage_total",
                       "storage_cap",
-                      "storage_OM",
-                      "storage_OM_fix",
-                      "storage_OM_var"]
+                      "storage_om"]
         if component not in components:
-            raise ValueError("Invalid component type. Expected one of %s" % components)
+            raise ValueError("Invalid component type. Expected one of {}".format(components))
         costs, percents = self._fill_partial_costs(component)
-        print("COST MATRIX: %s\nState\t     Time" % component)
+        print("COST MATRIX: %s\n\nState\t     Time" % component)
         self._print_labeled_matrix(costs, to_round=True)
-        print("\n\nPERCENTAGE MATRIX: %s\nState\t     Time" % component)
+        print("\n\nPERCENTAGE MATRIX: %s\n\nState\t     Time" % component)
         self._print_labeled_matrix(percents, precision=2)
 
     def print_rewards(self):
@@ -215,40 +209,11 @@ class MdpFiniteHorizonV2():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                cost = self.calc_total_cost(t, v, r, a)
+                cost = self.mdp_cost.calc_total_cost(t, v, r, a)
                 if cost < np.inf:
                     cost /= self.scale_down
                 # Model reward as negative cost.
                 self.rewards[idx][a] = -1 * cost
-
-    # COST FUNCTION
-
-    def calc_total_cost(self, t, v, r, a):
-        if a + r > self.n_plants:
-            return np.inf
-        f = self.n_plants-(r+a)
-        hours_yr = 24*365
-        # kW produced per plant should be the same for RES and FF.
-        kw_plant = self.fplant_size*self.fplant_capacity
-        co2_tax = self.c_co2_init * ((1+self.co2_inc)**t)
-        co2_emit = self.ff_emit*kw_plant*hours_yr
-        fplants_om_fix = self.c_ff_fix*kw_plant
-        fplants_om_var = self.c_ff_var*kw_plant
-        fplants_total = f * (fplants_om_fix+fplants_om_var+co2_tax*co2_emit)
-        rplants_cap = self.c_res_cap[v]*self.rplant_size
-        # Model plant failure as annual O&M cost.
-        rplants_replace = rplants_cap/self.rplant_lifetime
-        rplants_total = a * rplants_cap + r * rplants_replace
-        bss_total = self._calc_bss_cost(v, r, a)
-        cost = fplants_total + rplants_total + bss_total
-        return cost
-
-    def _calc_bss_cost(self, v, r, a):
-        # Additional storage capacity needed as percentage of total system load.
-        kwh_storage = self._calc_bss_kwh(r, a) - self._calc_bss_kwh(r, 0)
-        storage_om = self.c_bss_fix*kwh_storage*self.bss_hrs + self.c_bss_var*kwh_storage
-        storage_cap = self.c_bss_cap[v]*kwh_storage
-        return storage_om+storage_cap
 
     # HELPER FUNCTIONS
 
@@ -258,62 +223,9 @@ class MdpFiniteHorizonV2():
         idx_curr = self.state_to_id[state_curr]
         return ((t, v, r), state_curr, idx_curr)
 
-    def _calc_bss_kwh(self, r, a):
-        hours_yr = 24*365
-        kw_sys_total = self.fplant_size*self.fplant_capacity * self.n_plants
-        res_percent = (r+a)*100 / self.n_plants
-        bss_percent = self.bss_coefs[0] * np.exp(self.bss_coefs[1]*res_percent) + self.bss_coefs[2]
-        return bss_percent/100*kw_sys_total*hours_yr
-
-    def calc_partial_cost(self, t, v, r, a, component):
-        cost = 0
-        f = self.n_plants-(r+a)
-        if f < 0:
-            return np.inf
-        hours_yr = 24*365
-        kw_plant = self.fplant_size*self.fplant_capacity
-        co2_tax = self.c_co2_init * ((1+self.co2_inc)**t)
-        co2_emit = self.ff_emit*kw_plant*hours_yr
-        fplants_om_fix = self.c_ff_fix*kw_plant
-        fplants_om_var = self.c_ff_var*kw_plant
-        rplants_cap = self.c_res_cap[v]*self.rplant_size
-        rplants_replace = rplants_cap/self.rplant_lifetime
-        kwh_storage = self._calc_bss_kwh(r, a) - self._calc_bss_kwh(r, 0)
-        storage_cap = self.c_bss_cap[v]*kwh_storage
-        storage_om_fix = self.c_bss_fix*kwh_storage*self.bss_hrs
-        storage_om_var = self.c_bss_var*kwh_storage
-        if component == "rplants_total":
-            cost = a * rplants_cap + r * rplants_replace
-        elif component == "rplants_cap":
-            cost = a * rplants_cap
-        elif component == "rplants_replace":
-            cost = r * rplants_replace
-        elif component == "fplants_total":
-            cost = f * (fplants_om_fix + fplants_om_var + co2_tax*co2_emit)
-        elif component == "fplants_OM":
-            cost = f * (fplants_om_fix + fplants_om_var)
-        elif component == "fplants_OM_fix":
-            cost = f * (fplants_om_fix)
-        elif component == "fplants_OM_var":
-            cost = f * (fplants_om_fix)
-        elif component == "co2_emit":
-            cost = f * (co2_emit)
-        elif component == "co2_tax":
-            cost = f * (co2_emit * co2_tax)
-        elif component == "storage_total":
-            cost = storage_cap + storage_om_fix + storage_om_var
-        elif component == "storage_cap":
-            cost = storage_cap
-        elif component == "storage_OM":
-            cost = storage_om_fix + storage_om_var
-        elif component == "storage_OM_fix":
-            storage_om_fix
-        elif component == "storage_OM_var":
-            storage_om_var
-        return cost
-
     def _fill_partial_costs(self, component):
         self._enumerate_states()
+        mdp_cost = MdpCostCalculatorV2(self.params)
         costs = np.zeros([self.S, self.A])
         percents = np.zeros([self.S, self.A])
         for a in np.arange(self.A):
@@ -323,13 +235,17 @@ class MdpFiniteHorizonV2():
                 # Sanity check for integer id.
                 assert(idx == s)
                 (t, v, r) = state
-                costs[idx][a] = self.calc_partial_cost(t, v, r, a, component)
+                costs[idx][a] = mdp_cost.calc_partial_cost(t, v, r, a, component)
                 # Keep cost positive to save printing space.
                 if costs[idx][a] == np.inf:
                     percents[idx][a] = np.inf
                 else:
                     costs[idx][a] /= self.scale_down
-                    percents[idx][a] = (costs[idx][a]*100) / self.calc_total_cost(t, v, r, a)
+                    total_cost = mdp_cost.calc_total_cost(t, v, r, a)
+                    if total_cost == 0:
+                        percents[idx][a] = 0
+                    else:
+                        percents[idx][a] = (costs[idx][a]*100) / total_cost
         return costs, percents
 
     def _get_iter_states(self):
@@ -351,14 +267,6 @@ class MdpFiniteHorizonV2():
             else:
                 print(row)
 
-    def _round_sig_figs(self, num, sig_figs):
-        if num == 0:
-            return num
-        elif num == np.inf:
-            return np.inf
-        else:
-            return round(num, -1*int(math.floor(math.log10(abs(num))) - (sig_figs-1)))
-
     def _single_action_prob(self, state, a, a_actual):
         (t, v, r), state_curr, idx_curr = self._breakdown_state(state)
         state_next = (t+1, v, r+a_actual)
@@ -373,3 +281,176 @@ class MdpFiniteHorizonV2():
         else:
             # Tech stage must remain the same.
             self.transitions[a][idx_curr][idx_next] = 1.0
+
+
+class MdpCostCalculatorV2():
+    def __init__(self, params):
+        self.params = params
+        self.n_plants = params['n_plants']
+        # CO2
+        self.c_co2_init = params['c_co2_init']
+        self.co2_inc = params['co2_inc']
+        # FF
+        self.ff_size = params['ff_size']
+        self.ff_capacity = params['ff_capacity']
+        self.ff_lifetime = params['ff_lifetime']
+        self.c_ff_cap = params['c_ff_cap']
+        self.c_ff_fix = params['c_ff_fix']
+        self.c_ff_var = params['c_ff_var']
+        self.ff_emit = params['ff_emit']
+        # RES
+        self.res_size = params['ff_size']*params['ff_capacity']/params['res_capacity']
+        self.res_capacity = params['res_capacity']
+        self.res_lifetime = params['res_lifetime']
+        self.c_res_cap = params['c_res_cap']
+        # Storage
+        self.storage_mix = params['storage_mix']
+        self.storage_coefs = params['storage_coefs']
+        self.bss_hrs = params['bss_hrs']
+        self.c_bss_cap = params['c_bss_cap']
+        self.c_bss_fix = params['c_bss_fix']
+        self.c_bss_var = params['c_bss_var']
+        self.c_phs_cap = params['c_phs_cap']
+        self.c_phs_fix = params['c_phs_fix']
+
+    def calc_partial_cost(self, t, v, r, a, component):
+        cost = 0
+        f = self.n_plants-(r+a)
+        if f < 0:
+            return np.inf
+        if component == "co2_emit":
+            cost = self._co2_emit(f)
+        elif component == "co2_tax":
+            cost = self._co2_tax(t, f)
+        elif component == "ff_total":
+            cost = self._ff_total(f)
+        elif component == "ff_om":
+            cost = self._ff_om(f)
+        elif component == "ff_replace":
+            cost = self._ff_replace(f)
+        elif component == "res_total":
+            cost = self._res_total(v, r, a)
+        elif component == "res_cap":
+            cost = self._res_cap(v, a)
+        elif component == "res_replace":
+            cost = self._res_replace(v, r)
+        elif component == "bss_total":
+            cost = self._bss_total(v, r, a)
+        elif component == "bss_cap":
+            cost = self._bss_cap(v, r, a)
+        elif component == "bss_om":
+            cost = self._bss_om(r, a)
+        elif component == "phs_total":
+            assert(self._phs_total(v, r, a) == self._phs_cap(v, r, a)+self._phs_om(r, a))
+            cost = self._phs_total(v, r, a)
+        elif component == "phs_cap":
+            cost = self._phs_cap(v, r, a)
+        elif component == "phs_om":
+            cost = self._phs_om(r, a)
+        elif component == "storage_total":
+            cost = self._storage_total(v, r, a)
+        elif component == "storage_cap":
+            cost = self._storage_cap(v, r, a)
+        elif component == "storage_om":
+            cost = self._storage_om(r, a)
+        return cost
+
+    def calc_total_cost(self, t, v, r, a):
+        if a + r > self.n_plants:
+            return np.inf
+        f = self.n_plants - (r+a)
+        ff_total = self._ff_total(f)
+        res_total = self._res_total(v, r, a)
+        storage_total = self._storage_total(v, r, a)
+        return ff_total + res_total + storage_total
+
+    # FOSSIL FUEL PLANTS
+
+    def _ff_replace(self, f):
+        return f * self.c_ff_cap/self.ff_lifetime
+
+    def _ff_om(self, f):
+        kw_plant = self.ff_size*self.ff_capacity
+        ff_om_fix = self.c_ff_fix*kw_plant
+        ff_om_var = self.c_ff_var*kw_plant
+        return f * (ff_om_fix+ff_om_var)
+
+    def _ff_total(self, f):
+        ff_om = self._ff_om(f)
+        ff_replace = self._ff_replace(f)
+        return f * (ff_om+ff_replace)
+
+    # CARBON TAX
+
+    def _co2_emit(self, f):
+        kw_plant = self.ff_size*self.ff_capacity
+        hours_yr = 365*24
+        return f * (self.ff_emit*kw_plant*hours_yr)
+
+    def _co2_tax(self, t, f):
+        co2_emit = self._co2_emit(f)
+        return co2_emit * (self.c_co2_init*((1+self.co2_inc)**t))
+
+    # RENEWABLE PLANTS
+
+    def _res_cap(self, v, a):
+        return a * (self.c_res_cap[v]*self.res_size)
+
+    def _res_replace(self, v, r):
+        return r * (self.c_res_cap[v]/self.res_lifetime)
+
+    def _res_total(self, v, r, a):
+        res_cap = self._res_cap(v, a)
+        res_replace = self._res_replace(v, r)
+        return a * res_cap + r * res_replace
+
+    # BATTERIES
+
+    def _bss_cap(self, v, r, a):
+        kwh_bss = self.storage_mix[0] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        return self.c_bss_cap[v]*kwh_bss
+
+    def _bss_om(self, r, a):
+        kwh_bss = self.storage_mix[0] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        bss_om_fix = self.c_bss_fix*kwh_bss*self.bss_hrs
+        bss_om_var = self.c_bss_var*kwh_bss
+        return bss_om_fix+bss_om_var
+
+    def _bss_total(self, v, r, a):
+        bss_cap = self._bss_cap(v, r, a)
+        bss_om = self._bss_om(r, a)
+        return bss_cap+bss_om
+
+    # PUMPED HYDRO
+
+    def _phs_cap(self, v, r, a):
+        kwh_phs = self.storage_mix[1] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        return self.c_phs_cap*kwh_phs
+
+    def _phs_om(self, r, a):
+        kwh_phs = self.storage_mix[1] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        phs_om_fix = self.c_phs_fix*kwh_phs
+        return phs_om_fix
+
+    def _phs_total(self, v, r, a):
+        phs_cap = self._phs_cap(v, r, a)
+        phs_om = self._phs_om(r, a)
+        return phs_cap+phs_om
+
+    # TOTAL STORAGE
+
+    def _storage_kwh(self, r, a):
+        kwh_sys_total = self.ff_size*self.ff_capacity * self.n_plants * 24*365
+        res_percent = (r+a)*100 / self.n_plants
+        # Model grid reliability issues as exponentially increasing storage requirement.
+        storage_percent = self.storage_coefs[0] * np.exp(self.storage_coefs[1]*res_percent) + self.storage_coefs[2]
+        return storage_percent/100*kwh_sys_total
+
+    def _storage_cap(self, v, r, a):
+        return self._bss_cap(v, r, a) + self._phs_cap(v, r, a)
+
+    def _storage_om(self, r, a):
+        return self._bss_om(r, a) + self._phs_om(r, a)
+
+    def _storage_total(self, v, r, a):
+        return self._bss_total(v, r, a) + self._phs_total(v, r, a)

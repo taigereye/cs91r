@@ -1,4 +1,4 @@
-import getopt
+import argparse
 import sys
 
 from pathlib import Path
@@ -7,39 +7,36 @@ from mdp.models.mdp_v2 import MdpFiniteHorizonV2
 
 
 def main(argv):
-    try:
-        opts, args = getopt.getopt(argv, "m:p:o:c:")
-    except getopt.GetoptError:
-        print('usage: calc_partial_costs.py -m <modelversion> -p <paramsfile> -o <outputfile> -c <component>')
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="compute some part of MDP cost")
+    parser.add_argument("-m", "--version", help="MDP model version", type=int)
+    parser.add_argument("-p", "--paramsfile", help="txt file with args.version specific params dict")
+    parser.add_argument("-c", "--component", help="name of desired cost component")
+    args = parser.parse_args()
 
-    version = str(opts[0][1])
-    if int(version) < 2:
+    if int(args.version) < 2:
         print("error: calc_partial_costs only supported for MDP v2 or higher.")
         sys.exit(2)
 
-    component = str(opts[3][1])
-
-    params_dir = Path("results/v{}/params".format(version))
-    pf = params_dir / "p_v{}_{}.txt".format(version, opts[1][1])
+    params_dir = Path("results/v{}/params".format(args.version))
+    pf = params_dir / "p_v{}_{}.txt".format(args.version, args.paramsfile)
     with open(pf, 'r') as paramsfile:
         params = eval(paramsfile.read())
     paramsfile.close()
 
     mdp_fh = None
-    if int(version) == 2:
+    if int(args.version) == 2:
         mdp_fh = MdpFiniteHorizonV2(params)
 
     assert(mdp_fh is not None)
 
-    costs_dir = Path("results/v{}/costs".format(version))
-    of = costs_dir / "c_v{}_{}.txt".format(version, opts[2][1])
+    costs_dir = Path("results/v{}/costs".format(args.version))
+    of = costs_dir / "c_v{}_{}.txt".format(args.version, "{}_{}".format(args.paramsfile, args.component))
     outfile = open(of, 'w+')
 
     stdout_og = sys.stdout
     sys.stdout = outfile
 
-    mdp_fh.print_partial_costs(component)
+    mdp_fh.print_partial_costs(args.component)
 
     sys.stdout = stdout_og
     outfile.close()
