@@ -165,9 +165,9 @@ $ python run_mdp_fh.py -m <model_version> -p <params_file> -o <output_file>
 
 ### Inspecting Cost
 
-Use this command to calculate a breakdown of cost in any of the MDP model versions 2+. After running, the output file should contain two matrices: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
+Use this command to calculate a breakdown of cost for following the optimal policy. After running, the output file should contain two matrices: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
 
-Run the following command, specifying the model version, parameters file and output file as above. If the policy file is unspecified, costs will be calculated for the optimal policy. The final option, component, may be one of the following choices:
+Run the following command, specifying the model version, parameters file and output file as above. The final option, component, may be one of the following choices:
 - co2_emit: CO2 emissions from FF plants
 - co2_tax: carbon tax incurred by FF plants
 - fplants_total: total cost of FF plants
@@ -187,7 +187,7 @@ Run the following command, specifying the model version, parameters file and out
 - storage_om: operation & maintenance cost of all storage
 
 ```
-$ python calc_partial_costs.py -m <model_version> -p <params_file> [-a <policy_file>] -c <component>
+$ python calc_partial_costs.py -m <model_version> -p <params_file> -c <component>
 ```
 
 NOTE: All cost components calculated as system totals, not per plant. For invalid actions, absolute costs are displayed as infinity and percentages as -1.0.
