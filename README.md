@@ -61,15 +61,19 @@ The following table describes which variables are passed in as parameters to eac
 | c_ff_var          | X  | X  | X  |
 | ff_emit           | X  | X  | X  |
 | c_res_cap         | X  | X  | X  |
-| bss_coefs         |    |    | X  |
+| storage_mix       |    |    | X  |
+| storage_coefs     |    |    | X  |
+| bss_hours         |    |    | X  |
 | c_bss_cap         |    | X  | X  |
 | c_bss_fix         |    | X  | X  |
 | c_bss_var         |    | X  | X  |
+| c_phs_cap         |    |    | X  |
+| c_phs_fix         |    |    | X  |
 | p_adv_techstage   | X  | X  | X  |
 | p_rplant_fail     | X  | X  |    |
 | disc_rate         | X  | X  | X  |
 
-NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and `c_ff_var` is assumed to be 0.
+NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4.
 
 ## Models
 
