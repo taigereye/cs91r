@@ -115,11 +115,13 @@ v1 ASSUMPTIONS:
 
 ### MDP v2
 
-In this version, plant failure is modeled differently because failing BSS alongside RES plants is unrealistic. Instead of needing to rebuilt, RES plants now have an operation & maintenance cost that represents renewing some portion of the plant each year. The function for calculating BSS size is parametrized in this version.  
+In this version, plant failure is modeled as an additional annual operation & maintenance cost that represents renewing some portion of the plant each year. RES and FF plants both have this replacement cost, but not storage. Storage is now a customizable mix of batteries (BSS) and pumped hydro (PHS). The function for calculating storage size is parametrized in this version.  
 
 v2 ASSUMPTIONS:
 - Storage capacity required grows exponentially with percent RES penetration.
-- Construction costs of BSS combine energy vs. power dependent costs.
+- Construction costs of storage combine energy vs. power dependent costs.
+- Operation & maintenance costs of storage account for degradation, so no need for additional replacement cost.
+- Capital and operation & maintenance costs of pumped hydro do not change with tech stage.
 - RES power plant lifetime (and resulting need for replacement) can be modeled as an additional O&M cost equal to capital cost scaled by RES plant lifetime.
 - All BSS costs based on 4h li-ion battery system.
 
@@ -144,7 +146,7 @@ The repo structure for results and visuals, with example filenames, is as follow
 
 To run the commands below, first create a .txt file for the parameters or policy as needed. Parameters must be written in Python dictionary format (make sure that the dictionary matches the parameter list of the appropriate MDP model version). Any parameters that depend on tech stage should be written as a tuple of length `n_techstages`. Policies must be written in Python list (make sure the length matches `n_years` in the parameters passed in). The output file need not exist before running the command.
 
-For any commandline option that refers to a filename, pass in the root identifier. For example, to pass in the parameters file "p_v2_baseline.txt" simply use `-p baseline` instead of `-p p_v2_baseline.txt`. To pass in a matching output file, `-o baseline` should be used. Make sure that the files are named and located in this consistent format.
+For any commandline option that refers to a filename, pass in only the root identifier. For example, to pass in the parameters file "p_v2_baseline.txt" simply use `-p baseline` instead of `-p p_v2_baseline.txt`. To pass in a matching output file, `-o baseline` should be used. Make sure that the files are named and located in this consistent format.
 
 NOTE: If applicable, in the output file the state is always written as `(t, v, r)`, where `t` is current time in years (and thus current carbon tax), `v` is current tech stage, and `r` is current number out of total plants that are renewable. 
 
@@ -161,40 +163,49 @@ $ python run_mdp_fh.py -m <model_version> -p <params_file> -o <output_file>
 
 Use this command to calculate a breakdown of cost in any of the MDP model versions 2+. After running, the output file should contain two matrices: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
 
-Run the following command, specifying the model version, parameters file and output file as above.The final option, component, may be one of the following choices:
+Run the following command, specifying the model version, parameters file and output file as above. If the policy file is unspecified, costs will be calculated for the optimal policy. The final option, component, may be one of the following choices:
+- co2_emit: CO2 emissions from FF plants
+- co2_tax: carbon tax incurred by FF plants
+- fplants_total: total cost of FF plants
+- fplants_replace: failure/renewal cost of FF plants
+- fplants_om: operation & maintenance cost of FF plants
 - rplants_total: total cost of RES plants
 - rplants_cap: capital cost of RES plants
 - rplants_replace: failure/renewal cost of RES plants
-- fplants_total: total cost of FF plants
-- fplants_OM: operation & maintenance cost of FF plants
-- fplants_OM_fix: fixed operation & maintenance cost of FF plants
-- fplants_OM_var: variable operation & maintenance cost of FF plants
-- co2_emit: CO2 emissions from FF plants
-- co2_tax: carbon tax incurred by FF plants
-- storage_total: total cost of BSS
-- storage_cap: capital cost of BSS
-- storage_OM: operation & maintenance cost of BSS
-- storage_OM_fix: fixed operation & maintenance cost of BSS
-- storage_OM_var: variable operation & maintenance cost of BSS
+- bss_total: total cost of BSS
+- bss_cap: capital cost of BSS
+- bss_om: operation & maintenance cost of BSS
+- phs_total: total cost of PHS
+- phs_cap: capital cost of PHS
+- phs_om: operation & maintenance cost of PHS
+- storage_total: total cost of all storage
+- storage_cap: capital cost of all storage
+- storage_om: operation & maintenance cost of all storage
 
 ```
-$ python calc_partial_costs.py -m <model_version> -p <params_file> -o <output_file> -c <component>
+$ python calc_partial_costs.py -m <model_version> -p <params_file> [-a <policy_file>] -c <component>
 ```
 
 NOTE: All cost components calculated as system totals, not per plant. For invalid actions, absolute costs are displayed as infinity and percentages as -1.0.
 
 ### Visualizing Cost
 
-Use this command to see the cost by year of following the optimal policy. 
+For these commands, if the time range is unspecified, the entire time period of `n_years` will be plotted. If the tech stage is unspecified, then `n_tech_stages` adjacent bars will be plotted at each year. If the policy file is unspecified, costs will be calculated for the optimal policy.
 
-Run the following command, specifying the model version, tech stage (which remains fixed to reduce the number of dimensions), and parameters file. The generated plots will show 1) aggregate total cost by year, 2) absolute cost breakdown by year, and 3) percentage cost breakdown by year.
-
-```
-$ python plot_opt_policy_costs.py -m <model_version> -p <params_file> -v <tech_stage>
-```
-
-To generate the same three plots for an arbitrary policy, run the following command, specifying the model version, tech stage, and parameters file as above, as well as the policy file. As above, the tech stage remains fixed after which costs are calculated.    
+Run the following command to see a single cost component calculated for a single policy (the optimal or an arbitrary policy), specifying the model version and parameters file. The options for component are as listed above.
 
 ```
-$ python plot_arb_policy_costs.py -m <model_version> -p <params_file> -a <policyfile> -v <tech_stage>
+$ python plot_cost_component.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>] -c <component>
+```
+
+Run the following command to see the cost by year of following a given policy (the optimal or an arbitrary policy), specifying the model version and parameters file. The generated plots will show 1) aggregate total cost by year, 2) absolute cost breakdown by year, and 3) percentage cost breakdown by year.
+
+```
+$ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>]
+```
+
+To generate the same three plots for an arbitrary policy, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars. 
+
+```
+$ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
