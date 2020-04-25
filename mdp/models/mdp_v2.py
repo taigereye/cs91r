@@ -91,7 +91,7 @@ class MdpFiniteHorizonV2():
         self._rewards_wrapper()
         self.mdp_inst = mtb.mdp.FiniteHorizon(self.transitions,
                                               self.rewards,
-                                              self.disc_rate,
+                                              1-self.disc_rate,
                                               self.n_years)
         print("Initialization done.\n")
 
@@ -341,7 +341,6 @@ class MdpCostCalculatorV2():
         elif component == "bss_om":
             cost = self._bss_om(r, a)
         elif component == "phs_total":
-            assert(self._phs_total(v, r, a) == self._phs_cap(v, r, a)+self._phs_om(r, a))
             cost = self._phs_total(v, r, a)
         elif component == "phs_cap":
             cost = self._phs_cap(v, r, a)
@@ -359,15 +358,16 @@ class MdpCostCalculatorV2():
         if a + r > self.n_plants:
             return np.inf
         f = self.n_plants - (r+a)
+        co2_tax = self._co2_tax(t, f)
         ff_total = self._ff_total(f)
         res_total = self._res_total(v, r, a)
         storage_total = self._storage_total(v, r, a)
-        return ff_total + res_total + storage_total
+        return co2_tax + ff_total + res_total + storage_total
 
     # FOSSIL FUEL PLANTS
 
     def _ff_replace(self, f):
-        return f * self.c_ff_cap/self.ff_lifetime
+        return f * (self.c_ff_cap*self.ff_size/self.ff_lifetime)
 
     def _ff_om(self, f):
         kw_plant = self.ff_size*self.ff_capacity
@@ -397,7 +397,7 @@ class MdpCostCalculatorV2():
         return a * (self.c_res_cap[v]*self.res_size)
 
     def _res_replace(self, v, r):
-        return r * (self.c_res_cap[v]/self.res_lifetime)
+        return r * (self.c_res_cap[v]*self.res_size/self.res_lifetime)
 
     def _res_total(self, v, r, a):
         res_cap = self._res_cap(v, a)
@@ -412,7 +412,7 @@ class MdpCostCalculatorV2():
 
     def _bss_om(self, r, a):
         kwh_bss = self.storage_mix[0] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
-        bss_om_fix = self.c_bss_fix*kwh_bss*self.bss_hrs
+        bss_om_fix = self.c_bss_fix*kwh_bss/(365*24)
         bss_om_var = self.c_bss_var*kwh_bss
         return bss_om_fix+bss_om_var
 
@@ -429,7 +429,7 @@ class MdpCostCalculatorV2():
 
     def _phs_om(self, r, a):
         kwh_phs = self.storage_mix[1] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
-        phs_om_fix = self.c_phs_fix*kwh_phs
+        phs_om_fix = self.c_phs_fix*kwh_phs/(365*24)
         return phs_om_fix
 
     def _phs_total(self, v, r, a):
