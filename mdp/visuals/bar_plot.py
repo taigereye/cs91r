@@ -29,9 +29,9 @@ def plot_heatmap(x, y_2D, x_label, y_label, title):
     for i in range(y_2D.shape[0]):
         for j in range(y_2D.shape[1]):
             if int(im.norm(y_2D[i][j])) < threshold:
-                c = 'black'
+                c = 'k'
             else:
-                c = 'white'
+                c = 'w'
             text = ax.text(j, i, y_2D[i][j], ha="center", va="center", color=c)
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.set_xticks(np.arange(0, y_2D.shape[1], 2))
@@ -107,6 +107,21 @@ def plot_multiple_bar_stacked_double(x, y_pair_all_v, x_label, y_label, legend_l
             labelj = (legend_labels[j] if i == 0 else "")
             ax.bar(x+(i*3/2*w), y0, width=w/2, bottom=np.sum(y0_all[0:j], axis=0), label=labelj, color=colors[j], edgecolor='w')
             ax.bar(x+(i*3/2*w)+w/2, y1, width=w/2, bottom=np.sum(y1_all[0:j], axis=0), label=labelj, color=colors[j], edgecolor='w', alpha=0.50)
+    ax.grid(axis='y')
+    ax.set(xlabel=x_label, ylabel=y_label)
+    ax.legend(loc='best')
+    ax.set_title(title)
+    return fig
+
+
+def plot_multiple_line(x, y_all, x_label, y_label, legend_labels, title, scalar=None):
+    color_map = get_color_map(len(legend_labels))
+    colors = [color_map(c) for c in np.arange(y_all.shape[0])]
+    fig, ax = plt.subplots()
+    for i in np.arange(y_all.shape[0]):
+        ax.plot(x, y_all[i], color=colors[i], label=legend_labels[i])
+    if scalar:
+        ax.axhline(y=scalar, color='k', linewidth=2)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')

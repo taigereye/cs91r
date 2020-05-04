@@ -30,7 +30,7 @@ def main(argv):
         params = eval(paramsfile.read())
     paramsfile.close()
 
-    mdp_fh = None
+    mdp_model = None
     if int(args.version) == 2:
         mdp_model = MdpModelV2()
 

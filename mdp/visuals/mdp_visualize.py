@@ -1,9 +1,10 @@
 import numpy as np
 
+from mdp.models.mdp_v2 import MdpModelV2
 import mdp.visuals.bar_plot as bp
 
 
-# COST PLOTS
+# COSTS
 
 def cost_breakdown_wrapper(mdp_fh, policy, policy_type, components, t_range, v=None, percent=False):
     t0 = t_range[0]
@@ -135,7 +136,7 @@ def total_cost_all_v(mdp_fh, t0, tN, policy):
     return np.asarray(y_v)
 
 
-# POLICY PLOTS
+# POLICY
 
 
 def policy_plants_all_v(mdp_fh, policy, policy_type, t_range, code):
@@ -161,7 +162,7 @@ def policy_plants_probabilistic_v(mdp_fh, policy_type, t_range, n_iter):
     y_bar_label = "Renewable Plants Built"
     y_line_label = "Avg Tech Stage"
     runs, y_a, y_r = avg_policy_probabilistic_v(mdp_fh, t0, tN, n_iter)
-    title = "Avg Actions with Tech Stage Transition: {}".format(policy_type)
+    title = "Avg Optimal Policy with Probabilistic Tech Stage"
     return bp.plot_single_bar_double_with_line(x, [y_a, y_r], runs, x_label, y_bar_label, y_line_label, title)
 
 
@@ -176,6 +177,48 @@ def avg_policy_probabilistic_v(mdp_fh, t0, tN, n_iter):
     y_r = np.sum(y_r, axis=0)/n_iter
     runs = np.sum(runs, axis=0)[t0:tN]/n_iter
     return runs, y_a, y_r
+
+
+# STORAGE
+
+
+def storage_reductions_wrapper(mdp_fh_reduced, t_range, reductions, budget=None, RESpenetration=None):
+    t0 = t_range[0]
+    tN = t_range[1]
+    x = np.arange(t0, tN)
+    x_label = "Time (Years)"
+    percent_reductions = ["{:.0f}%".format(frac*100) for frac in reductions]
+    if budget:
+        y_label = "Cost (USD)"
+        y_all = total_cost_storage_reductions(mdp_fh_reduced, t0, tN, reductions)
+        title = "Effect of Storage Costs on Total Cost"
+        return bp.plot_multiple_line(x, y_all, x_label, y_label, percent_reductions, title, scalar=budget)
+    elif RESpenetration:
+        y_label = "RES Penetration (%)"
+        y_all = total_RES_storage_reductions(mdp_fh_reduced, t0, tN, reductions)
+        title = "Effect of Storage Costs on RES Penetration"
+        return bp.plot_multiple_line(x, y_all, x_label, y_label, percent_reductions, title, scalar=RESpenetration)
+
+
+def total_cost_storage_reductions(mdp_fh_reduced, t0, tN, reductions):
+    storage_all = []
+    for mdp_fh in mdp_fh_reduced:
+        # Make all cost reductions relative to tech stage 0.
+        opt_policy = get_opt_policy_trajectory(mdp_fh, 0)
+        y = total_cost_single_v(mdp_fh, t0, tN, 0, opt_policy)
+        storage_all.append(y)
+    return np.asarray(storage_all)
+
+
+def total_RES_storage_reductions(mdp_fh_reduced, t0, tN, reductions):
+    storage_all = []
+    for mdp_fh in mdp_fh_reduced:
+        # Make all cost reductions relative to tech stage 0.
+        opt_policy = get_opt_policy_trajectory(mdp_fh, 0)
+        y_r = extract_idx_annotated_policy(opt_policy[t0:tN], 'r')
+        y = [val*100/mdp_fh.n_plants for val in y_r]
+        storage_all.append(y)
+    return np.asarray(storage_all)
 
 
 # HELPER FUNCTIONS
@@ -236,6 +279,13 @@ def get_opt_policy_vary_techstage(mdp_fh, techstages):
         t += 1
         r += a
     return policy_annotated
+
+
+def reduce_storage_costs_params(params, frac):
+    params_reduced = params
+    params_reduced['c_bss_cap'] = [c*frac for c in params_reduced['c_bss_cap']]
+    params_reduced['c_phs_cap'] *= frac
+    return params_reduced
 
 
 def run_techstage_transition(mdp_fh, n_iter):
