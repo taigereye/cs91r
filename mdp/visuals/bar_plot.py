@@ -22,6 +22,24 @@ def label_single_bars_above(rects, bar_labels, ax):
         ax.annotate("{}".format(label), (x, y), xytext=(0, 5), textcoords="offset points", ha='center', va='bottom')
 
 
+def plot_heatmap(x, y_2D, x_label, y_label, title):
+    fig, ax = plt.subplots()
+    im = ax.imshow(y_2D, cmap="YlGn")
+    threshold = im.norm(np.max(y_2D))/2
+    for i in range(y_2D.shape[0]):
+        for j in range(y_2D.shape[1]):
+            if int(im.norm(y_2D[i][j])) < threshold:
+                c = 'black'
+            else:
+                c = 'white'
+            text = ax.text(j, i, y_2D[i][j], ha="center", va="center", color=c)
+    ax.set(xlabel=x_label, ylabel=y_label)
+    ax.set_xticks(np.arange(0, y_2D.shape[1], 2))
+    ax.set_yticks(np.arange(y_2D.shape[0]))
+    ax.set_title(title)
+    return fig
+
+
 def plot_multiple_bar(x, y_all, x_label, y_label, title, w=0.15):
     color_map = get_color_map(y_all.shape[0])
     colors = [color_map(c) for c in np.arange(y_all.shape[0])]
@@ -115,6 +133,19 @@ def plot_single_bar_double(x, y_pair, x_label, y_label, title, w=0.30, bar_label
         label_single_bars_above(ax.patches, bar_labels, ax)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
+    ax.set_title(title)
+    return fig
+
+
+def plot_single_bar_double_with_line(x, y_bar, y_line, x_label, y_bar_label, y_line_label, title, w=0.30):
+    fig, ax = plt.subplots()
+    ax.bar(x, y_bar[0], width=w, color='g', edgecolor='w')
+    ax.bar(x+w/2, y_bar[1], width=w/2, color='g', edgecolor='w', alpha=0.50)
+    ax.grid(axis='y')
+    ax.set(xlabel=x_label, ylabel=y_bar_label)
+    axT = ax.twinx()
+    axT.plot(x, y_line, color='b')
+    axT.set_ylabel(y_line_label)
     ax.set_title(title)
     return fig
 
