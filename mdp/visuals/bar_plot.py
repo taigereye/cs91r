@@ -57,13 +57,15 @@ def plot_multiple_bar_stacked(x, y_all_v, x_label, y_label, legend_labels, title
         y_all = y_all_v[i]
         if percent:
             y_all = y_all / np.sum(y_all, axis=0)
-        ax.bar(x+(i*w), y_all[0], width=w-0.05, label=legend_labels[0], color=colors[0], edgecolor='w')
+        label0 = (legend_labels[0] if i == 0 else "")
+        ax.bar(x+(i*w), y_all[0], width=w-0.05, label=label0, color=colors[0], edgecolor='w')
         for j in np.arange(1, y_all_v.shape[1]):
             y = y_all[j]
-            ax.bar(x+(i*w), y, width=w-0.05, bottom=np.sum(y_all[0:j], axis=0), label=legend_labels[j], color=colors[j], edgecolor='w')
+            labelj = (legend_labels[j] if i == 0 else "")
+            ax.bar(x+(i*w), y, width=w-0.05, bottom=np.sum(y_all[0:j], axis=0), label=labelj, color=colors[j], edgecolor='w')
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
-    ax.legend(loc='best')
+    ax.legend(loc='best', )
     ax.set_title(title)
     return fig
 
@@ -78,17 +80,15 @@ def plot_multiple_bar_stacked_double(x, y_pair_all_v, x_label, y_label, legend_l
         if percent:
             y0_all = y0_all / np.sum(y0_all, axis=0)
             y1_all = y1_all / np.sum(y1_all, axis=0)
-        # ax.bar(x+(i*w/2), y0_all[0], width=w/2, label=legend_labels[0], color=colors[0], edgecolor='w')
-        # ax.bar(x+(2*w+i*w/2), y1_all[0], width=w/2, label=legend_labels[0], color=colors[0], edgecolor='w', alpha=0.50)
-        ax.bar(x+(i*3/2*w), y0_all[0], width=w/2, label=legend_labels[0], color=colors[0], edgecolor='w')
-        ax.bar(x+(i*3/2*w)+w/2, y1_all[0], width=w/2, label=legend_labels[0], color=colors[0], edgecolor='w', alpha=0.50)
+        label0 = (legend_labels[0] if i == 0 else "")
+        ax.bar(x+(i*3/2*w), y0_all[0], width=w/2, label=label0, color=colors[0], edgecolor='w')
+        ax.bar(x+(i*3/2*w)+w/2, y1_all[0], width=w/2, label=label0, color=colors[0], edgecolor='w', alpha=0.50)
         for j in np.arange(1, y_pair_all_v.shape[2]):
             y0 = y0_all[j]
             y1 = y1_all[j]
-            ax.bar(x+(i*3/2*w), y0, width=w/2, bottom=np.sum(y0_all[0:j], axis=0), label=legend_labels[j], color=colors[j], edgecolor='w')
-            ax.bar(x+(i*3/2*w)+w/2, y1, width=w/2, bottom=np.sum(y1_all[0:j], axis=0), label=legend_labels[j], color=colors[j], edgecolor='w', alpha=0.50)
-            # ax.bar(x+(i*w/2), y0, width=w/2, bottom=np.sum(y0_all[0:j], axis=0), label=legend_labels[j], color=colors[j], edgecolor='w')
-            # ax.bar(x+(2*w+i*w/2), y1, width=w/2, bottom=np.sum(y1_all[0:j], axis=0), label=legend_labels[j], color=colors[j], edgecolor='w', alpha=0.50)
+            labelj = (legend_labels[j] if i == 0 else "")
+            ax.bar(x+(i*3/2*w), y0, width=w/2, bottom=np.sum(y0_all[0:j], axis=0), label=labelj, color=colors[j], edgecolor='w')
+            ax.bar(x+(i*3/2*w)+w/2, y1, width=w/2, bottom=np.sum(y1_all[0:j], axis=0), label=labelj, color=colors[j], edgecolor='w', alpha=0.50)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')

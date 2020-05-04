@@ -115,7 +115,7 @@ class MdpFiniteHorizonV2():
                       "co2_tax",
                       "ff_total",
                       "ff_replace",
-                      "ff_OM",
+                      "ff_om",
                       "res_total",
                       "res_cap",
                       "res_replace",
