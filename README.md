@@ -48,34 +48,34 @@ Faculty: Milind Tambe
 
 The following table describes which variables are passed in as parameters to each model version.
 
-| Variable          | v0 | v1 | v2 | v3 |
-| ----------------- | -- | -- | -- | -- |
-| n_years           | X  | X  | X  | X  |
-| n_tech_stages     | X  | X  | X  | X  |
-| n_plants          | X  | X  | X  | X  |
-| fplant_capacity   |    | X  | X  | X  |
-| fplant_size       |    | X  | X  | X  |
-| rplant_capacity   |    | X  | X  | X  |
-| rplant_size       |    | X  | X  | X  |
-| rplant_lifetime   |    |    | X  | X  |
-| c_co2_init        | X  | X  | X  | X  |
-| co2_inc           | X  | X  | X  | X  |
-| co2_tax_type      |    |    |    | X  |
-| c_ff_fix          | X  | X  | X  | X  |
-| c_ff_var          | X  | X  | X  | X  |
-| ff_emit           | X  | X  | X  | X  |
-| c_res_cap         | X  | X  | X  | X  |
-| storage_mix       |    |    | X  | X  |
-| storage_coefs     |    |    | X  | X  |
-| bss_hours         |    |    | X  | X  |
-| c_bss_cap         |    | X  | X  | X  |
-| c_bss_fix         |    | X  | X  | X  |
-| c_bss_var         |    | X  | X  | X  |
-| c_phs_cap         |    |    | X  | X  |
-| c_phs_fix         |    |    | X  | X  |
-| p_adv_techstage   | X  | X  | X  | X  |
-| p_rplant_fail     | X  | X  |    |    |
-| disc_rate         | X  | X  | X  | X  |
+| Variable          |   Unit  | v0 | v1 | v2 | v3 |
+| ----------------- | ------- | -- | -- | -- | -- |
+| n_years           |         | X  | X  | X  | X  |
+| n_tech_stages     |         | X  | X  | X  | X  |
+| n_plants          |         | X  | X  | X  | X  |
+| fplant_capacity   |    %    |    | X  | X  | X  |
+| fplant_size       |   kW    |    | X  | X  | X  |
+| rplant_capacity   |    %    |    | X  | X  | X  |
+| rplant_size       |   kW    |    | X  | X  | X  |
+| rplant_lifetime   |   yr    |    |    | X  | X  |
+| c_co2_init        |    $    | X  | X  | X  | X  |
+| co2_inc           |    %    | X  | X  | X  | X  |
+| co2_tax_type      | lin/exp |    |    |    | X  |
+| c_ff_fix          |  $/kW   | X  | X  | X  | X  |
+| c_ff_var          |  $/kWh  | X  | X  | X  | X  |
+| ff_emit           | ton/kWh | X  | X  | X  | X  |
+| c_res_cap         |  $/kW   | X  | X  | X  | X  |
+| storage_mix       |   %,%   |    |    | X  | X  |
+| storage_coefs     |         |    |    | X  | X  |
+| bss_hours         |   hr    |    |    | X  | X  |
+| c_bss_cap         |  $/kWh  |    | X  | X  | X  |
+| c_bss_fix         |  $/kW   |    | X  | X  | X  |
+| c_bss_var         |  $/kWh  |    | X  | X  | X  |
+| c_phs_cap         |  $/kWh  |    |    | X  | X  |
+| c_phs_fix         |  $/kW   |    |    | X  | X  |
+| p_adv_techstage   |         | X  | X  | X  | X  |
+| p_rplant_fail     |         | X  | X  |    |    |
+| disc_rate         |    %    | X  | X  | X  | X  |
 
 NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0. In all versions except MDP v3, `p_adv_techstage` is a constant.
 
@@ -227,7 +227,7 @@ To generate the same three plots for two different policies, run the following c
 $ python plot_compare_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
 
-## Visualizing Stochasticity
+### Visualizing Stochasticity
 
 The following commands generate results by averaging the optimal policy for a number of iterations. This is to capture some of the stochasticity built into the model by probabilistic tech stage transitions. Unless the tech stage is specified in the plot, assume that the results shown are for an averaged optimal policy. For these commands, if the time range is unspecified, the entire time period of `n_years` will be plotted, and if the number of iterations is unspecified, the model will be run 200 times.
 
