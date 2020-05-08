@@ -189,21 +189,21 @@ def policy_plants_all_v(mdp_fh, policy, policy_type, t_range, code):
 
 # Average optimal policy with stochastic tech stage
 
-def policy_plants_probabilistic_v(mdp_fh, t_range, n_iter):
+def policy_plants_probabilistic_v(mdp_fh, t_range, n_iter, p_adv_vary=True):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
     y_label_bar = "Total RES Plants"
     y_label_line = "Avg Tech Stage"
-    runs, y_a, y_r = avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter)
+    runs, y_a, y_r = avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary=p_adv_vary)
     title = "Avg Optimal Policy with Probabilistic Tech Stage"
     return mplt.plot_single_bar_double_with_line(x, [y_a, y_r], runs, x_label, y_label_bar, y_label_line, title)
 
 
-def avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter):
+def avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
     policy_all = []
-    runs = run_techstage_transition(mdp_fh, n_iter)
+    runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
     for techstages in runs:
         policy_all.append(get_opt_policy_vary_techstage(mdp_fh, techstages))
     y_a = [extract_idx_annotated_policy(policy[t0:tN], 'a') for policy in policy_all]
@@ -217,12 +217,12 @@ def avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter):
 # CO2 EMISSIONS
 
 
-def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False):
+def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_vary=True):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
-    runs, y_r, y_emit, y_tax = avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter)
+    runs, y_r, y_emit, y_tax = avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary=p_adv_vary)
     y_label_r = "Number of Total RES Plants"
     if is_annual:
         y_emit, scale_str = scale_y_dollar_data(y_emit)
@@ -246,9 +246,9 @@ def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False):
                                                        y_label_r, labels, title, is_annual=is_annual)
 
 
-def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter):
+def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
     policy_all = []
-    runs = run_techstage_transition(mdp_fh, n_iter)
+    runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
     for techstages in runs:
         policy_all.append(get_opt_policy_vary_techstage(mdp_fh, techstages))
     y_r = [extract_idx_annotated_policy(policy[t0:tN], 'r') for policy in policy_all]
@@ -464,14 +464,21 @@ def reduce_storage_costs_params(params, frac):
     return params_reduced
 
 
-def run_techstage_transition(mdp_fh, n_iter):
+def run_techstage_transition(mdp_fh, n_iter, p_adv_vary=True):
     runs = np.zeros([n_iter, mdp_fh.n_years])
     for i in np.arange(n_iter):
         techstage = 0
+        if p_adv_vary:
+            p_adv = mdp_fh.p_adv_tech_stage[0]
+        else:
+            p_adv = mdp_fh.p_adv_tech_stage
         for step in np.arange(1, mdp_fh.n_years):
-            # Whether or not the tech stage advances this year.
-            adv = np.random.binomial(1, mdp_fh.p_adv_tech_stage)
-            if adv and techstage < 2:
+            # Decide whether or not the tech stage advances this year.
+            adv = np.random.binomial(1, p_adv)
+            if adv and techstage < mdp_fh.n_tech_stages - 1:
+                if p_adv_vary:
+                    if techstage < mdp_fh.n_tech_stages - 2:
+                        p_adv = mdp_fh.p_adv_tech_stage[techstage+1]
                 techstage += 1
             runs[i][step] = techstage
     return runs

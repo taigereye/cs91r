@@ -7,6 +7,7 @@ from pathlib import Path
 
 import mdp.visuals.mdp_visualize as mv
 from mdp.models.mdp_v2 import MdpModelV2
+from mdp.models.mdp_v3 import MdpModelV3
 
 
 def main(argv):
@@ -32,6 +33,10 @@ def main(argv):
     mdp_model = None
     if int(args.version) == 2:
         mdp_model = MdpModelV2()
+        p_adv_vary = False
+    if int(args.version) == 3:
+        mdp_model = MdpModelV3()
+        p_adv_vary = True
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
@@ -65,7 +70,7 @@ def main(argv):
 
     fig_fixed_a = mv.policy_plants_all_v(mdp_fh, policy, policy_type, [t0, tN], 'a')
     fig_fixed_r = mv.policy_plants_all_v(mdp_fh, policy, policy_type, [t0, tN], 'r')
-    fig_transition = mv.policy_plants_probabilistic_v(mdp_fh, [t0, tN], args.iterations)
+    fig_transition = mv.policy_plants_probabilistic_v(mdp_fh, [t0, tN], args.iterations, p_adv_vary=p_adv_vary)
 
     if args.save:
         fig_fixed_a.savefig(visuals_dir / "g_v{}_{}_fixed_a_{}.png".format(args.version, policy_type, paramsfile))

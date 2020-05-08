@@ -6,6 +6,7 @@ from pathlib import Path
 from mdp.models.mdp_v0 import MdpModelV0
 from mdp.models.mdp_v1 import MdpModelV1
 from mdp.models.mdp_v2 import MdpModelV2
+from mdp.models.mdp_v3 import MdpModelV3
 
 
 def main(argv):

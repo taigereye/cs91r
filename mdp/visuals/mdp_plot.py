@@ -182,9 +182,11 @@ def plot_single_bar_double_with_line(x, y_bar, y_line, x_label, y_bar_label, y_l
     ax.bar(x+w/2, y_bar[1], width=w/2, color='g', edgecolor='w', alpha=0.50)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_bar_label)
+    ax.yaxis.label.set_color('g')
     axT = ax.twinx()
     axT.plot(x, y_line, color='b')
     axT.set_ylabel(y_line_label)
+    axT.yaxis.label.set_color('b')
     ax.set_title(title)
     fig.tight_layout()
     return fig
