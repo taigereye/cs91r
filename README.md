@@ -226,3 +226,26 @@ To generate the same three plots for two different policies, run the following c
 ```
 $ python plot_compare_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
+
+## Visualizing Stochasticity
+
+The following commands generate results by averaging the optimal policy for a number of iterations. This is to capture some of the stochasticity built into the model by probabilistic tech stage transitions. Unless the tech stage is specified in the plot, assume that the results shown are for an averaged optimal policy. For these commands, if the time range is unspecified, the entire time period of `n_years` will be plotted, and if the number of iterations is unspecified, the model will be run 200 times.
+
+To see how a series of reductions in storage costs affect the optimal policy, run the following command, specifying the model version, parameters file, and storage reductions as a series of arguments. Each argument should be a float representing the desired cost fraction (use 1.0 as the first argument to see a cost curve for a 0% reduction in storage). The annual budget and target RES penetration (percentage of plants that are renewable) should be scalars, given in USD and % respectively, that will be added to the plot to help determine which cost curves are within budget and achieve desired RES penetration. The generated plots will show 1) annual costs, 2) cumulative costs, and 3) number of RES plants (new and existing) for each storage reduction over time.
+
+```
+$ python plot_storage_sensitivity.py -m <model_version> -p <params_file> -s <storage_cost_reductions> [-t time_0 time_N] [-b <annual_budget>] [-r <target_RES_penetration>]
+```
+
+Run the following command, specifying the model version and parameters file as above, to see both deterministic and stochastic plots of the optimal policy. The generated plots will show 1) how many new RES plants are built under a fixed tech stage, 2) how many new and existing RES plants there are under a fixed tech stage, and 3) the average number of RES plants (new and existing) as well as the average tech stage over time when the model is run `iterations` times.
+
+```
+$ python plot_techstage_transition.py -m <model_version> -p <params_file> [-t time_0 time_N] [-i <iterations>]
+```
+
+Run the following command, specifying the model version and parameters file as above, to see how CO2 emissions and the CO2 tax change over time when the model is run `iterations` times. The generated plots will show the average number of RES plants (new and existing) against 1) annual emissions and carbon tax cost, and 2) cumulative emissions and carbon tax cost over time.
+
+```
+$ python plot_co2_impacts.py -m <model_version> -p <params_file> [-t time_0 time_N] [-i <iterations>]
+```
+
