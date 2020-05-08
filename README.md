@@ -18,6 +18,7 @@ Faculty: Milind Tambe
 - RES (or res) : referring to renewable plant 
 - FF (or ff) : referring to fossil fuel plant 
 - BSS (or bss): referring to battery storage system
+- PHS (or phs): referring to pumped hydro system
 
 ## Variables
 
@@ -39,6 +40,8 @@ Faculty: Milind Tambe
 - `c_bss_cap`: Initial construction costs of a BSS per kW. Depends on tech stage.
 - `c_bss_fix`: Annual fixed operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
 - `c_bss_var`: Annual variable operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
+- `c_phs_cap`: Initial construction costs of a PHS per kW. Independent of tech stage.
+- `c_phs_fix`: Annual fixed operation & maintenance costs of a PHS plant per kWh. Independent of tech stage.
 - `p_adv_techstage`: Probability that tech stage advances to the next given the current stage is not the highest. Assume it is only possible to advance by 1 at a time.
 - `p_rplant_fail`: Probability that a RES plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
 - `disc_rate`: Discount rate (avg of solar PV and onshore wind rates in North America).
@@ -73,7 +76,7 @@ The following table describes which variables are passed in as parameters to eac
 | p_rplant_fail     | X  | X  |    |
 | disc_rate         | X  | X  | X  |
 
-NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4.
+NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0.
 
 ## Models
 
