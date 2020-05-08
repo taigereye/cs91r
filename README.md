@@ -32,51 +32,52 @@ Faculty: Milind Tambe
 - `rplant_lifetime`: Number of years that a single RES power plant can run before needing renewal/reconstruction. 
 - `c_co2_init`: Starting price of carbon per ton.
 - `co2_inc`: Increment of carbon tax as percent per year.
-- `c_ff_fix`: Annual fixed operation & maintenance costs of a FF plant per kW (avg of coal and natural gas). Independent of tech stage.
-- `c_ff_var`: Annual variable operation & maintenance costs of a FF plant per kWh (avg of coal and natural gas). Independent of tech stage.
-- `ff_emit`: Annual emissions of a FF plant in kg CO2 per kWh (avg of coal and natural gas).
-- `c_res_cap`: Initial construction costs of a RES plant per kW (avg of solar PV and onshore wind). Depends on tech stage.
+- `c_ff_fix`: Annual fixed operation & maintenance costs of a FF plant (avg of coal and natural gas). Independent of tech stage.
+- `c_ff_var`: Annual variable operation & maintenance costs of a FF plant (avg of coal and natural gas). Independent of tech stage.
+- `ff_emit`: Annual emissions of a FF plant (avg of coal and natural gas).
+- `c_res_cap`: Initial construction costs of a RES plant (avg of solar PV and onshore wind). Depends on tech stage.
 - `bss_coefs`: Coefficients for the exponential function that models storage required (as % of system load) for a given % renewable penetration.
-- `c_bss_cap`: Initial construction costs of a BSS per kW. Depends on tech stage.
+- `c_bss_cap`: Initial construction costs of a BSS. Depends on tech stage.
 - `c_bss_fix`: Annual fixed operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
 - `c_bss_var`: Annual variable operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
-- `c_phs_cap`: Initial construction costs of a PHS per kW. Independent of tech stage.
-- `c_phs_fix`: Annual fixed operation & maintenance costs of a PHS plant per kWh. Independent of tech stage.
+- `c_phs_cap`: Initial construction costs of a PHS. Independent of tech stage.
+- `c_phs_fix`: Annual fixed operation & maintenance costs of a PHS plant. Independent of tech stage.
 - `p_adv_techstage`: Probability that tech stage advances to the next given the current stage is not the highest. Assume it is only possible to advance by 1 at a time.
 - `p_rplant_fail`: Probability that a RES plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
 - `disc_rate`: Discount rate (avg of solar PV and onshore wind rates in North America).
 
 The following table describes which variables are passed in as parameters to each model version.
 
-| Variable          | v0 | v1 | v2 |
-| ----------------- | -- | -- | -- |
-| n_years           | X  | X  | X  |
-| n_tech_stages     | X  | X  | X  |
-| n_plants          | X  | X  | X  |
-| fplant_capacity   |    | X  | X  |
-| fplant_size       |    | X  | X  |
-| rplant_capacity   |    | X  | X  |
-| rplant_size       |    | X  | X  |
-| rplant_lifetime   |    |    | X  |
-| c_co2_init        | X  | X  | X  |
-| co2_inc           | X  | X  | X  |
-| c_ff_fix          | X  | X  | X  |
-| c_ff_var          | X  | X  | X  |
-| ff_emit           | X  | X  | X  |
-| c_res_cap         | X  | X  | X  |
-| storage_mix       |    |    | X  |
-| storage_coefs     |    |    | X  |
-| bss_hours         |    |    | X  |
-| c_bss_cap         |    | X  | X  |
-| c_bss_fix         |    | X  | X  |
-| c_bss_var         |    | X  | X  |
-| c_phs_cap         |    |    | X  |
-| c_phs_fix         |    |    | X  |
-| p_adv_techstage   | X  | X  | X  |
-| p_rplant_fail     | X  | X  |    |
-| disc_rate         | X  | X  | X  |
+| Variable          | v0 | v1 | v2 | v3 |
+| ----------------- | -- | -- | -- | -- |
+| n_years           | X  | X  | X  | X  |
+| n_tech_stages     | X  | X  | X  | X  |
+| n_plants          | X  | X  | X  | X  |
+| fplant_capacity   |    | X  | X  | X  |
+| fplant_size       |    | X  | X  | X  |
+| rplant_capacity   |    | X  | X  | X  |
+| rplant_size       |    | X  | X  | X  |
+| rplant_lifetime   |    |    | X  | X  |
+| c_co2_init        | X  | X  | X  | X  |
+| co2_inc           | X  | X  | X  | X  |
+| co2_tax_type      |    |    |    | X  |
+| c_ff_fix          | X  | X  | X  | X  |
+| c_ff_var          | X  | X  | X  | X  |
+| ff_emit           | X  | X  | X  | X  |
+| c_res_cap         | X  | X  | X  | X  |
+| storage_mix       |    |    | X  | X  |
+| storage_coefs     |    |    | X  | X  |
+| bss_hours         |    |    | X  | X  |
+| c_bss_cap         |    | X  | X  | X  |
+| c_bss_fix         |    | X  | X  | X  |
+| c_bss_var         |    | X  | X  | X  |
+| c_phs_cap         |    |    | X  | X  |
+| c_phs_fix         |    |    | X  | X  |
+| p_adv_techstage   | X  | X  | X  | X  |
+| p_rplant_fail     | X  | X  |    |    |
+| disc_rate         | X  | X  | X  | X  |
 
-NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0.
+NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0. In all versions except MDP v3, `p_adv_techstage` is a constant.
 
 ## Models
 
@@ -109,6 +110,8 @@ v0 ASSUMPTIONS:
 - FF and RES plants have the same capacity factor and are built to the same generation size.
 - RES plant lifetime (and resulting need for replacement) can be modeled as Bernoulli probability of failure each year (probability is reciprocal of lifetime).
 - If a RES plant fails, it fails at the beginning of year t and is immediately replaced (can resume normal operations by the end of the year).
+- Probability of transitioning from tech stage `v` to `v+1` is independent of `v` and time.
+- Carbon tax grows exponentially with time.
 
 ### MDP v1
 
@@ -132,24 +135,31 @@ v2 ASSUMPTIONS:
 - RES power plant lifetime (and resulting need for replacement) can be modeled as an additional O&M cost equal to capital cost scaled by RES plant lifetime.
 - All BSS costs based on 4h li-ion battery system.
 
+### MDP v3
+
+This version shares most of its core assumptions and structure with the previous version. However, the probabiliy of advancing to the next tech stage can be different for different tech stages. The carbon tax may follow a linear or exponential growth pattern.    
+
+v3 ASSUMPTIONS:
+- Probability of transitioning from tech stage `v` to `v+1` is independent of time.
+
 ## Results and Visuals
 
 The repo structure for results and visuals, with example filenames, is as follows:
 - mdp/
   - results/
-    - v2/
+    - v3/
       - costs/
-        - c_v2_baseline.txt
+        - c_v3_baseline.txt
       - params/
-        - p_v2_baseline.txt
+        - p_v3_baseline.txt
       - runs/
-        - r_v2_baseline.txt
+        - r_v3_baseline.txt
   - visuals/
-    - v2
+    - v3
       - plots/
-        - g_v2_opt_policy_total_cost_baseline_0.txt
+        - g_v3_opt_policy_total_cost_baseline_0.txt
       - policies/
-        - a_v2_one_per_third_year.txt
+        - a_v3_one_per_last_ten_years.txt
 
 To run the commands below, first create a .txt file for the parameters or policy as needed. Parameters must be written in Python dictionary format (make sure that the dictionary matches the parameter list of the appropriate MDP model version). Any parameters that depend on tech stage should be written as a tuple of length `n_techstages`. Policies must be written in Python list (make sure the length matches `n_years` in the parameters passed in). The output file need not exist before running the command.
 
@@ -211,8 +221,8 @@ Run the following command to see the cost by year of following a given policy (t
 $ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>]
 ```
 
-To generate the same three plots for an arbitrary policy, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars. 
+To generate the same three plots for two different policies, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars. 
 
 ```
-$ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
+$ python plot_compare_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
