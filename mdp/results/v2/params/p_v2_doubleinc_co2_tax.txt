@@ -7,8 +7,8 @@
 'ff_lifetime': 30,
 'res_capacity': 0.30,
 'res_lifetime': 25,
-'c_co2_init': 364,
-'co2_inc': 0.05,
+'c_co2_init': 40,
+'co2_inc': 0.10,
 'c_ff_cap': 2990,
 'c_ff_fix': 26.27,
 'c_ff_var': 0.043,
@@ -22,6 +22,6 @@
 'c_bss_var': 1.75,
 'c_phs_cap': 165,
 'c_phs_fix': 15,
-'p_adv_tech_stage': 0.1,
+'p_adv_tech_stage': 0.25,
 'disc_rate': 0.06
 }

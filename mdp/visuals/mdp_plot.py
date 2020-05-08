@@ -3,25 +3,6 @@ from matplotlib.patches import Patch
 import numpy as np
 
 
-def get_color_map(n, name='hsv'):
-    return plt.cm.get_cmap(name, n+1)
-
-
-def get_legend_handles(legend_labels):
-    legend_handles = []
-    for l in legend_labels:
-        handle = Patch(label=l)
-        legend_handles.append(handle)
-    return legend_handles
-
-
-def label_single_bars_above(rects, bar_labels, ax):
-    for rect, label in zip(rects, bar_labels):
-        x = rect.get_x() + rect.get_width()/2.
-        y = rect.get_height()
-        ax.annotate("{}".format(label), (x, y), xytext=(0, 5), textcoords="offset points", ha='center', va='bottom')
-
-
 def plot_heatmap(x, y_2D, x_label, y_label, title):
     fig, ax = plt.subplots()
     im = ax.imshow(y_2D, cmap="YlGn")
@@ -37,6 +18,7 @@ def plot_heatmap(x, y_2D, x_label, y_label, title):
     ax.set_xticks(np.arange(0, y_2D.shape[1], 2))
     ax.set_yticks(np.arange(y_2D.shape[0]))
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -50,6 +32,7 @@ def plot_multiple_bar(x, y_all, x_label, y_label, title, w=0.15):
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -64,6 +47,7 @@ def plot_multiple_bar_double(x, y_pair_all, x_label, y_label, title, w=0.20):
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -85,6 +69,7 @@ def plot_multiple_bar_stacked(x, y_all_v, x_label, y_label, legend_labels, title
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best', )
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -111,21 +96,58 @@ def plot_multiple_bar_stacked_double(x, y_pair_all_v, x_label, y_label, legend_l
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
-def plot_multiple_line(x, y_all, x_label, y_label, legend_labels, title, scalar=None):
+def plot_multiple_line(x, y_all, x_label, y_label, legend_labels, title, scalar=None, scalar_name=None, is_fixed=False):
     color_map = get_color_map(len(legend_labels))
     colors = [color_map(c) for c in np.arange(y_all.shape[0])]
     fig, ax = plt.subplots()
     for i in np.arange(y_all.shape[0]):
         ax.plot(x, y_all[i], color=colors[i], label=legend_labels[i])
     if scalar:
-        ax.axhline(y=scalar, color='k', linewidth=2)
+        if is_fixed:
+            ax.axhline(y=scalar, color='k', linestyle='dashed', label=scalar_name)
+        else:
+            y_scalar = np.cumsum(np.full(y_all.shape[1], scalar))
+            ax.plot(x, y_scalar, color='k', linestyle='dashed', label=scalar_name)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')
     ax.set_title(title)
+    fig.tight_layout()
+    return fig
+
+
+def plot_multiple_line_twin_single_bar(x, y_lines, y_bar, n_plants, x_label, y_label_lines, y_label_bar, labels, title, is_annual=False):
+    colors = ['g', 'r', 'b', 'darkred', 'midnightblue']
+    if is_annual:
+        c = 1
+    else:
+        c = 3
+    fig, ax = plt.subplots()
+    ll = ax.plot(x, y_lines[0], color=colors[c+0], label=labels[1])
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label_lines[0])
+    ax.yaxis.label.set_color(colors[c+0])
+    axT = ax.twinx()
+    lr = axT.plot(x, y_lines[1], color=colors[c+1], label=labels[2])
+    axT.set_ylabel(y_label_lines[1])
+    axT.yaxis.label.set_color(colors[c+1])
+    axB = ax.twinx()
+    lb = axB.bar(x, y_bar, width=0.10, color=colors[0], label=labels[0], alpha=0.75)
+    axB.spines["right"].set_position(("axes", 1.1))
+    axB.spines["right"].set_visible(True)
+    axB.set_ylabel(y_label_bar)
+    axB.set_ylim(0, n_plants)
+    axB.yaxis.label.set_color(colors[0])
+    axB.legend(loc='upper right')
+    lines = ll+lr
+    labels = [l.get_label() for l in lines]
+    ax.legend(lines, labels, loc='upper left')
+    ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -137,6 +159,7 @@ def plot_single_bar(x, y, x_label, y_label, title, w=0.30, bar_labels=None):
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -149,6 +172,7 @@ def plot_single_bar_double(x, y_pair, x_label, y_label, title, w=0.30, bar_label
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -162,6 +186,7 @@ def plot_single_bar_double_with_line(x, y_bar, y_line, x_label, y_bar_label, y_l
     axT.plot(x, y_line, color='b')
     axT.set_ylabel(y_line_label)
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -179,6 +204,7 @@ def plot_single_bar_stacked(x, y_all, x_label, y_label, legend_labels, title, w=
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')
     ax.set_title(title)
+    fig.tight_layout()
     return fig
 
 
@@ -200,4 +226,34 @@ def plot_single_bar_stacked_double(x, y_pair_all, x_label, y_label, legend_label
     ax.set(xlabel=x_label, ylabel=y_label)
     ax.legend(loc='best')
     ax.set_title(title)
+    fig.tight_layout()
     return fig
+
+
+# HELPER FUNCTIONS
+
+
+def get_color_map(n, name='hsv'):
+    return plt.cm.get_cmap(name, n+1)
+
+
+def get_legend_handles(legend_labels):
+    legend_handles = []
+    for l in legend_labels:
+        handle = Patch(label=l)
+        legend_handles.append(handle)
+    return legend_handles
+
+
+def label_single_bars_above(rects, bar_labels, ax):
+    for rect, label in zip(rects, bar_labels):
+        x = rect.get_x() + rect.get_width()/2.
+        y = rect.get_height()
+        ax.annotate("{}".format(label), (x, y), xytext=(0, 5), textcoords="offset points", ha='center', va='bottom')
+
+
+def make_patch_spines_invisible(ax):
+    ax.set_frame_on(True)
+    ax.patch.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)

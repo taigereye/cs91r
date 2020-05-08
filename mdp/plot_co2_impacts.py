@@ -14,13 +14,12 @@ def main(argv):
     parser.add_argument("-m", "--version", help="MDP model version", type=int)
     parser.add_argument("-p", "--paramsfile", help="txt file with version specific params as dict")
     parser.add_argument("-t", "--timerange", help="see specific time range", nargs=2, type=int, default=None)
-    parser.add_argument("-a", "--policy", help="txt file with policy as list", default=None)
     parser.add_argument("-i", "--iterations", help="number of simulations of tech stage transition", type=int, default=200)
     parser.add_argument("--save", help="save plots as png files", action='store_true')
     args = parser.parse_args()
 
     if int(args.version) < 2:
-        print("error: plot_techstage_transition only supported for MDP v2 or higher.")
+        print("error: plot_co2_impacts only supported for MDP v2 or higher.")
         sys.exit(1)
 
     params_dir = Path("results/v{}/params".format(args.version))
@@ -47,30 +46,18 @@ def main(argv):
         t0 = 0
         tN = mdp_fh.n_years
 
-    if args.policy:
-        policies_dir = Path("visuals/v{}/policies".format(args.version))
-        af = policies_dir / "a_v{}_{}.txt".format(args.version, args.policy)
-        with open(af, 'r') as policyfile:
-            arb_policy = eval(policyfile.read())
-        policyfile.close()
-        assert(len(arb_policy) == mdp_fh.n_years)
-        policy_type = args.policy
-        policy = [mv.get_arb_policy_trajectory(arb_policy, v) for v in np.arange(mdp_fh.n_tech_stages)]
-    else:
-        policy_type = "optimal"
-        policy = [mv.get_opt_policy_trajectory(mdp_fh, v) for v in np.arange(mdp_fh.n_tech_stages)]
+    policy = [mv.get_opt_policy_trajectory(mdp_fh, v) for v in np.arange(mdp_fh.n_tech_stages)]
 
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
-    fig_fixed_a = mv.policy_plants_all_v(mdp_fh, policy, policy_type, [t0, tN], 'a')
-    fig_fixed_r = mv.policy_plants_all_v(mdp_fh, policy, policy_type, [t0, tN], 'r')
-    fig_transition = mv.policy_plants_probabilistic_v(mdp_fh, [t0, tN], args.iterations)
+    fig_annual = mv.co2_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=True)
+    fig_cum = mv.co2_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=False)
+    # fig_emit_r = mv.policy_plants_all_v(mdp_fh, policy, policy_type, [t0, tN], 'r')
 
     if args.save:
-        fig_fixed_a.savefig(visuals_dir / "g_v{}_{}_fixed_a_{}.png".format(args.version, policy_type, paramsfile))
-        fig_fixed_r.savefig(visuals_dir / "g_v{}_{}_fixed_r_{}.png".format(args.version, policy_type, paramsfile))
-        fig_transition.savefig(visuals_dir / "g_v{}_transition_{}.png".format(args.version, paramsfile))
+        fig_annual.savefig(visuals_dir / "g_v{}_co2_emit_tax_ann_{}.png".format(args.version, paramsfile))
+        fig_annual.savefig(visuals_dir / "g_v{}_co2_emit_tax_cum_{}.png".format(args.version, paramsfile))
     plt.show()
 
 

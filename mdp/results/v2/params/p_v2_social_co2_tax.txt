@@ -22,6 +22,6 @@
 'c_bss_var': 1.75,
 'c_phs_cap': 165,
 'c_phs_fix': 15,
-'p_adv_tech_stage': 0.1,
+'p_adv_tech_stage': 0.25,
 'disc_rate': 0.06
 }

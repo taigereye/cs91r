@@ -319,9 +319,9 @@ class MdpCostCalculatorV2():
         if f < 0:
             return np.inf
         if component == "co2_emit":
-            cost = self._co2_emit(f)
+            cost = self.co2_emit(f)
         elif component == "co2_tax":
-            cost = self._co2_tax(t, f)
+            cost = self.co2_tax(t, f)
         elif component == "ff_total":
             cost = self._ff_total(f)
         elif component == "ff_om":
@@ -358,7 +358,7 @@ class MdpCostCalculatorV2():
         if a + r > self.n_plants:
             return np.inf
         f = self.n_plants - (r+a)
-        co2_tax = self._co2_tax(t, f)
+        co2_tax = self.co2_tax(t, f)
         ff_total = self._ff_total(f)
         res_total = self._res_total(v, r, a)
         storage_total = self._storage_total(v, r, a)
@@ -382,13 +382,13 @@ class MdpCostCalculatorV2():
 
     # CARBON TAX
 
-    def _co2_emit(self, f):
+    def co2_emit(self, f):
         kw_plant = self.ff_size*self.ff_capacity
         hours_yr = 365*24
         return f * (self.ff_emit*kw_plant*hours_yr)
 
-    def _co2_tax(self, t, f):
-        co2_emit = self._co2_emit(f)
+    def co2_tax(self, t, f):
+        co2_emit = self.co2_emit(f)
         return co2_emit * (self.c_co2_init*((1+self.co2_inc)**t))
 
     # RENEWABLE PLANTS

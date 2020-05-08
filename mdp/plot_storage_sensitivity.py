@@ -21,7 +21,7 @@ def main(argv):
     args = parser.parse_args()
 
     if int(args.version) < 2:
-        print("error: plot_single_policy_costs only supported for MDP v2 or higher.")
+        print("error: plot_storage_sensitivity only supported for MDP v2 or higher.")
         sys.exit(1)
 
     params_dir = Path("results/v{}/params".format(args.version))
@@ -56,12 +56,12 @@ def main(argv):
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
-    fig_budget = mv.storage_reductions_wrapper(mdp_fh_reduced, [t0, tN], args.reductions, budget=args.budget)
-    fig_RESpenetration = mv.storage_reductions_wrapper(mdp_fh_reduced, [t0, tN], args.reductions, RESpenetration=args.RESpenetration)
+    (fig_budget_annual, fig_budget_cum), fig_res = mv.storage_reductions_wrapper(mdp_fh_reduced, [t0, tN], args.reductions, budget=args.budget, RES=args.RESpenetration)
 
     if args.save:
-        fig_budget.savefig(visuals_dir / "g_v{}_storage_reductions_budget_{}.png".format(args.version, paramsfile))
-        fig_RESpenetration.savefig(visuals_dir / "g_v{}_storage_reductions_RESpenetration_{}.png".format(args.version, paramsfile))
+        fig_budget_annual.savefig(visuals_dir / "g_v{}_storage_reductions_budget_ann{}.png".format(args.version, paramsfile))
+        fig_budget_cum.savefig(visuals_dir / "g_v{}_storage_reductions_budget_cum{}.png".format(args.version, paramsfile))
+        fig_res.savefig(visuals_dir / "g_v{}_storage_reductions_RESpenetration_{}.png".format(args.version, paramsfile))
     plt.show()
 
 
