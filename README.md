@@ -17,32 +17,36 @@ Faculty: Milind Tambe
 - fplant : fossil fuel plant 
 - RES (or res) : referring to renewable plant 
 - FF (or ff) : referring to fossil fuel plant 
-- BSS (or bss): referring to battery storage system
-- PHS (or phs): referring to pumped hydro system
+- BS (or bss): referring to battery storage system
+- PH (or phs): referring to pumped hydro system
 
 ## Variables
 
 - `n_years`: Total time period (number of steps).
 - `n_tech_stages`: Number of technological advancement stages it is possible to pass through.
 - `n_plants`: Total number of power plants. All begin as FF plants and can be converted to RES plants.
-- `fplant_size`: Nameplate capacity of single FF plant in kW.
-- `fplant_capacity`: Capacity factor of single FF plant.
-- `rplant_capacity`: Capacity factor of single RES plant. 
-- `rplant_size`: Nameplate capacity of RES plant in kW can be calculated from given plant size/capacity parameters.
-- `rplant_lifetime`: Number of years that a single RES power plant can run before needing renewal/reconstruction. 
+- `ff_size`: Nameplate capacity of single FF plant.
+- `ff_capacity`: Capacity factor of single FF plant.
+- `res_capacity`: Capacity factor of single RES plant. 
+- `res_size`: Nameplate capacity of RES plant in kW can be calculated from given plant size/capacity parameters.
+- `res_lifetime`: Number of years that a single RES power plant can run before needing renewal/reconstruction. 
 - `c_co2_init`: Starting price of carbon per ton.
-- `co2_inc`: Increment of carbon tax as percent per year.
+- `c_co2_inc`: Increment of carbon tax as percent per year.
+- `co2_tax_type`: If "LINEAR", then `c_co2_inc` used as coefficient in linear function to calculate carbon tax. If "EXPONENTIAL", then `c_co2_inc` used as coefficient in exponential function to calculate carbon tax.
+- `c_ff_cap`: Initial construction costs of a FF plant (avg of coal and natural gas). Independent of tech stage.
 - `c_ff_fix`: Annual fixed operation & maintenance costs of a FF plant (avg of coal and natural gas). Independent of tech stage.
 - `c_ff_var`: Annual variable operation & maintenance costs of a FF plant (avg of coal and natural gas). Independent of tech stage.
 - `ff_emit`: Annual emissions of a FF plant (avg of coal and natural gas).
-- `c_res_cap`: Initial construction costs of a RES plant (avg of solar PV and onshore wind). Depends on tech stage.
-- `bss_coefs`: Coefficients for the exponential function that models storage required (as % of system load) for a given % renewable penetration.
-- `c_bss_cap`: Initial construction costs of a BSS. Depends on tech stage.
-- `c_bss_fix`: Annual fixed operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
-- `c_bss_var`: Annual variable operation & maintenance costs of a BSS plant per kWh. Independent of tech stage.
-- `c_phs_cap`: Initial construction costs of a PHS. Independent of tech stage.
-- `c_phs_fix`: Annual fixed operation & maintenance costs of a PHS plant. Independent of tech stage.
-- `p_adv_techstage`: Probability that tech stage advances to the next given the current stage is not the highest. Assume it is only possible to advance by 1 at a time.
+- `c_res_cap`: Initial construction costs of a RES plant (avg of solar PV and onshore wind). Dependent on tech stage.
+- `storage_coefs`: Coefficients for the exponential function that models storage required (as % of system load) for a given % renewable penetration.
+- `storage_mix`: Percentage of storage system built using BSS and PHS, respectively.
+- `bss_hrs`: Number of hours that BS system can hold charge for.
+- `c_bss_cap`: Initial construction costs of a BS system. Dependent on tech stage.
+- `c_bss_fix`: Annual fixed operation & maintenance costs of a BS system per kWh. Independent of tech stage.
+- `c_bss_var`: Annual variable operation & maintenance costs of a BS system per kWh. Independent of tech stage.
+- `c_phs_cap`: Initial construction costs of a PH system. Independent of tech stage.
+- `c_phs_fix`: Annual fixed operation & maintenance costs of a PH system. Independent of tech stage.
+- `p_adv_tech`: Probability that tech stage advances to the next given the current stage is not the highest. Assume it is only possible to advance by 1 at a time.
 - `p_rplant_fail`: Probability that a RES plant "fails" at the end of the year. A plant that fails is always replaced in the next year for the same cost as building a new plant.
 - `disc_rate`: Discount rate (avg of solar PV and onshore wind rates in North America).
 
@@ -53,14 +57,15 @@ The following table describes which variables are passed in as parameters to eac
 | n_years           |         | X  | X  | X  | X  |
 | n_tech_stages     |         | X  | X  | X  | X  |
 | n_plants          |         | X  | X  | X  | X  |
-| fplant_capacity   |    %    |    | X  | X  | X  |
-| fplant_size       |   kW    |    | X  | X  | X  |
-| rplant_capacity   |    %    |    | X  | X  | X  |
-| rplant_size       |   kW    |    | X  | X  | X  |
-| rplant_lifetime   |   yr    |    |    | X  | X  |
+| ff_capacity       |    %    |    | X  | X  | X  |
+| ff_size           |   kW    |    | X  | X  | X  |
+| res_capacity      |    %    |    | X  | X  | X  |
+| res_size          |   kW    |    | X  | X  | X  |
+| res_lifetime      |   yr    |    |    | X  | X  |
 | c_co2_init        |    $    | X  | X  | X  | X  |
-| co2_inc           |    %    | X  | X  | X  | X  |
+| c_co2_inc         |    %    | X  | X  | X  | X  |
 | co2_tax_type      | lin/exp |    |    |    | X  |
+| c_ff_cap          |  $/kW   |    |    | X  | X  |
 | c_ff_fix          |  $/kW   | X  | X  | X  | X  |
 | c_ff_var          |  $/kWh  | X  | X  | X  | X  |
 | ff_emit           | ton/kWh | X  | X  | X  | X  |
@@ -73,11 +78,11 @@ The following table describes which variables are passed in as parameters to eac
 | c_bss_var         |  $/kWh  |    | X  | X  | X  |
 | c_phs_cap         |  $/kWh  |    |    | X  | X  |
 | c_phs_fix         |  $/kW   |    |    | X  | X  |
-| p_adv_techstage   |         | X  | X  | X  | X  |
+| p_adv_tech        |         | X  | X  | X  | X  |
 | p_rplant_fail     |         | X  | X  |    |    |
 | disc_rate         |    %    | X  | X  | X  | X  |
 
-NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0. In all versions except MDP v3, `p_adv_techstage` is a constant.
+NOTE: In MDP v0, there is a single average `plant_size` and `plant_capacity` used instead of the breakdown by plant type, and in MDP v1, `bss_hrs` is fixed at 4. In MDP v2, `c_phs_fix` is assumed to be 0. In all versions except MDP v3, `p_adv_tech` is a constant.
 
 ## Models
 
@@ -181,23 +186,19 @@ $ python run_mdp_fh.py -m <model_version> -p <params_file> -o <output_file>
 Use this command to calculate a breakdown of cost for following the optimal policy. After running, the output file should contain two matrices: 1) where a cost component is calculated as an absolute (these numbers will be positive although the cost is negated in the actual rewards matrix) and 2) where the cost component is calculated as a percentage of the total cost. Both matrices should be the same size as the MDP rewards matrix.
 
 Run the following command, specifying the model version, parameters file and output file as above. The final option, component, may be one of the following choices:
-- co2_emit: CO2 emissions from FF plants
 - co2_tax: carbon tax incurred by FF plants
 - fplants_total: total cost of FF plants
-- fplants_replace: failure/renewal cost of FF plants
-- fplants_om: operation & maintenance cost of FF plants
-- rplants_total: total cost of RES plants
-- rplants_cap: capital cost of RES plants
-- rplants_replace: failure/renewal cost of RES plants
+- ff_replace: failure/renewal cost of FF plants
+- ff_om: operation & maintenance cost of FF plants
+- res_total: total cost of RES plants
+- res_cap: capital cost of RES plants
+- res_replace: failure/renewal cost of RES plants
 - bss_total: total cost of BSS
 - bss_cap: capital cost of BSS
 - bss_om: operation & maintenance cost of BSS
 - phs_total: total cost of PHS
 - phs_cap: capital cost of PHS
 - phs_om: operation & maintenance cost of PHS
-- storage_total: total cost of all storage
-- storage_cap: capital cost of all storage
-- storage_om: operation & maintenance cost of all storage
 
 ```
 $ python calc_partial_costs.py -m <model_version> -p <params_file> -c <component>
@@ -212,29 +213,36 @@ For these commands, if the time range is unspecified, the entire time period of 
 Run the following command to see a single cost component calculated for a single policy (the optimal or an arbitrary policy), specifying the model version and parameters file. The options for component are as listed above.
 
 ```
-$ python plot_cost_component.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>] -c <component>
+$ python plot_cost_component.py -m <model_version> -p <params_file> -c <component> [-a <policy_file>] [-t time_0 time_N] [-v <tech_stage>]
 ```
 
 Run the following command to see the cost by year of following a given policy (the optimal or an arbitrary policy), specifying the model version and parameters file. The generated plots will show 1) aggregate total cost by year, 2) absolute cost breakdown by year, and 3) percentage cost breakdown by year.
 
 ```
-$ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>]
+$ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] [-a <policy_file>] [--granular]
 ```
 
-To generate the same three plots for two different policies, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars. 
+To generate the same three plots for two different policies, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars.
 
 ```
 $ python plot_compare_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
 
+NOTE: Unless the `granular` option is turned on, only the following cost components will be shown:
+- co2_tax
+- ff_total
+- res_total
+- bhs_total
+- phs_total
+
 ### Visualizing Stochasticity
 
 The following commands generate results by averaging the optimal policy for a number of iterations. This is to capture some of the stochasticity built into the model by probabilistic tech stage transitions. Unless the tech stage is specified in the plot, assume that the results shown are for an averaged optimal policy. For these commands, if the time range is unspecified, the entire time period of `n_years` will be plotted, and if the number of iterations is unspecified, the model will be run 200 times.
 
-To see how a series of reductions in storage costs affect the optimal policy, run the following command, specifying the model version, parameters file, and storage reductions as a series of arguments. Each argument should be a float representing the desired cost fraction (use 1.0 as the first argument to see a cost curve for a 0% reduction in storage). The annual budget and target RES penetration (percentage of plants that are renewable) should be scalars, given in USD and % respectively, that will be added to the plot to help determine which cost curves are within budget and achieve desired RES penetration. The generated plots will show 1) annual costs, 2) cumulative costs, and 3) number of RES plants (new and existing) for each storage reduction over time.
+To see how a series of reductions in storage costs affect the average optimal policy, run the following command, specifying the model version, parameters file, and storage reductions as a series of arguments. Each argument should be a float representing the desired cost fraction (use 1.0 as the first argument to see a cost curve for a 0% reduction in storage). The annual budget and target RES penetration (percentage of plants that are renewable) should be scalars, given in USD and % respectively, that will be added to the plot to help determine which cost curves are within budget and achieve desired RES penetration. The generated plots will show 1) annual costs, 2) cumulative costs, and 3) number of RES plants (new and existing) for each storage reduction over time.
 
 ```
-$ python plot_storage_sensitivity.py -m <model_version> -p <params_file> -s <storage_cost_reductions> [-t time_0 time_N] [-b <annual_budget>] [-r <target_RES_penetration>]
+$ python plot_storage_sensitivity.py -m <model_version> -p <params_file> -s <storage_cost_reductions> [-t time_0 time_N] [-i <iterations>] [-b <annual_budget>] [-r <target_RES_penetration>]
 ```
 
 Run the following command, specifying the model version and parameters file as above, to see both deterministic and stochastic plots of the optimal policy. The generated plots will show 1) how many new RES plants are built under a fixed tech stage, 2) how many new and existing RES plants there are under a fixed tech stage, and 3) the average number of RES plants (new and existing) as well as the average tech stage over time when the model is run `iterations` times.
@@ -249,3 +257,8 @@ Run the following command, specifying the model version and parameters file as a
 $ python plot_co2_impacts.py -m <model_version> -p <params_file> [-t time_0 time_N] [-i <iterations>]
 ```
 
+To see the annual CO2 emissions as calculated above but for different sets of parameters, run the following command, specifying the model version as above. Provide at least one argument to the `-p` option in order to see a curve on the plot.
+
+```
+$ python plot_compare_co2_emit.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
+```
