@@ -15,7 +15,7 @@ class MdpModelV1():
                             'fplant_capacity',
                             'rplant_capacity',
                             'c_co2_init',
-                            'co2_inc',
+                            'c_co2_inc',
                             'c_ff_fix',
                             'c_ff_var',
                             'ff_emit',
@@ -24,7 +24,7 @@ class MdpModelV1():
                             'c_bss_fix',
                             'c_bss_var',
                             'p_rplant_fail',
-                            'p_adv_tech_stage',
+                            'p_adv_tech',
                             'disc_rate']
 
     def run_param_ranges(self, param_ranges):
@@ -65,7 +65,7 @@ class MdpFiniteHorizonV1():
         self.rplant_size = params['fplant_size']*params['fplant_capacity']/params['rplant_capacity']
         self.rplant_capacity = params['rplant_capacity']
         self.c_co2_init = params['c_co2_init']
-        self.co2_inc = params['co2_inc']
+        self.c_co2_inc = params['c_co2_inc']
         self.c_ff_fix = params['c_ff_fix']
         self.c_ff_var = params['c_ff_var']
         self.ff_emit = params['ff_emit']
@@ -74,7 +74,7 @@ class MdpFiniteHorizonV1():
         self.c_bss_fix = params['c_bss_fix']
         self.c_bss_var = params['c_bss_var']
         self.p_rplant_fail = params['p_rplant_fail']
-        self.p_adv_tech_stage = params['p_adv_tech_stage']
+        self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
         # Dimensions
         self.A = self.n_plants + 1
@@ -197,11 +197,11 @@ class MdpFiniteHorizonV1():
     def _calc_total_cost(self, t, v, r, a):
         if a + r > self.n_plants:
             return np.inf
-        carbontax = self.c_co2_init * ((1+self.co2_inc)**t)
+        carbontax = self.c_co2_init * ((1+self.c_co2_inc)**t)
         hours_yr = 24*365
         # kW per plant should be the same for RES and FF plants.
         kw_plant = self.rplant_size*self.rplant_capacity
-        total_ff_emit = self.ff_emit*kw_plant*hours_yr
+        total_ff_emit = self.ff_emit/1e3*kw_plant*hours_yr
         c_om_ff = self.c_ff_fix*kw_plant + self.c_ff_var*kw_plant*hours_yr
         c_fplants = (self.n_plants-a) * (c_om_ff + total_ff_emit*carbontax)
         # Assume RES plants have no O&M costs.
@@ -252,9 +252,9 @@ class MdpFiniteHorizonV1():
                 state_next_v = (t+1, v+1, plants_next)
                 idx_next_v = self.state_to_id[state_next_v]
                 # Tech stage may remain the same.
-                self.transitions[a][idx_curr][idx_next] = (1.0-self.p_adv_tech_stage) * prob_fail
+                self.transitions[a][idx_curr][idx_next] = (1.0-self.p_adv_tech) * prob_fail
                 # Tech stage may advance (assume only possible to advance by 1).
-                self.transitions[a][idx_curr][idx_next_v] = self.p_adv_tech_stage * prob_fail
+                self.transitions[a][idx_curr][idx_next_v] = self.p_adv_tech * prob_fail
             else:
                 # Tech stage must remain the same.
                 self.transitions[a][idx_curr][idx_next] = prob_fail

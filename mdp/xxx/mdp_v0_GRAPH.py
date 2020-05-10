@@ -14,7 +14,7 @@ def graph_by_techstage(mdp_instance, v):
 
 def main():
     mdp_model = MdpModelV0()
-    param_list = [50, 3, 10, 600000, 0.35, 100, 0.05, (1284, 746, 456), 68.8, 0.0011, 1/25, 0.25, 0.06]
+    param_list = [50, 3, 10, 600000, 0.35, 100, 0.05, (1284, 746, 456), 68.8, 1.65, 1/25, 0.25, 0.06]
     params = mdp_model.create_params(param_list)
     sys.stdout = open(os.devnull, 'w')  # BLOCK PRINT
     mdp_instance = mdp_model.run_single(params)

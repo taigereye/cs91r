@@ -6,7 +6,7 @@ import mdp.visuals.mdp_plot as mplt
 
 # COSTS
 
-# Total annual cost breakdown into ff, res, co2, bhs, phs costs
+# Total annual cost breakdown into ff, res, co2, bhs, phs costs with fixed tech stage (single or all)
 
 def cost_breakdown_wrapper(mdp_fh, policy, policy_type, components, t_range, v=None, percent=False):
     t0 = t_range[0]
@@ -69,7 +69,7 @@ def cost_breakdown_all_v(mdp_fh, t0, tN, policy, components):
     return np.asarray(y_all_v)
 
 
-# Single component of total annual cost 
+# Single component of total annual cost with fixed tech stage (single or all)
 
 def cost_by_component_wrapper(mdp_fh, policy, policy_type, component, t_range, v=None):
     t0 = t_range[0]
@@ -118,7 +118,7 @@ def cost_by_component_all_v(mdp_fh, t0, tN, policy, component):
     return np.asarray(y_v)
 
 
-# Total annual cost
+# Total annual cost with fixed tech stage (single or all)
 
 def total_cost_wrapper(mdp_fh, policy, policy_type, t_range, v=None):
     t0 = t_range[0]
@@ -172,7 +172,7 @@ def total_cost_all_v(mdp_fh, t0, tN, policy):
 
 # Optimal policy for each tech stage fixed
 
-def policy_plants_all_v(mdp_fh, policy, policy_type, t_range, code):
+def opt_policy_rplants_all_v(mdp_fh, policy, policy_type, t_range, code):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
@@ -184,21 +184,23 @@ def policy_plants_all_v(mdp_fh, policy, policy_type, t_range, code):
         title = "Newly Built RES Plants: {}".format(policy_type)
     elif code == 'r':
         title = "Total RES Plants: {}".format(policy_type)
-    return mplt.plot_heatmap(x, y_v, x_label, y_label, title)
+    return mplt.plot_heatmap(x, y_v, mdp_fh.n_plants,x_label, y_label, title)
 
 
 # Average optimal policy with stochastic tech stage
 
-def policy_plants_probabilistic_v(mdp_fh, t_range, n_iter, p_adv_vary=True):
+def opt_policy_probabilistic_v(mdp_fh, t_range, n_iter, p_adv_vary=True):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
-    y_label_bar = "Total RES Plants"
-    y_label_line = "Avg Tech Stage"
+    y_label_bars = "Number of Renewable Plants"
+    y_label_line = "Average Tech Stage"
+    labels = ["New RES Plants", "Total RES Plants"]
     runs, y_a, y_r = avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary=p_adv_vary)
-    title = "Avg Optimal Policy with Probabilistic Tech Stage"
-    return mplt.plot_single_bar_double_with_line(x, [y_a, y_r], runs, x_label, y_label_bar, y_label_line, title)
+    title = "Average Optimal Policy with Probabilistic Tech Stage"
+    return mplt.plot_single_bar_double_twin_line(x, [y_a, y_r], runs, x_label, y_label_bars,
+                                                 y_label_line, labels, title)
 
 
 def avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
@@ -216,8 +218,36 @@ def avg_res_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
 
 # CO2 EMISSIONS
 
+# Average annual CO2 emissions of optimal policy with stochastic tech stage for different CO2 tax schedules
 
-def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_vary=True):
+def opt_policy_co2_emit(mdp_fh_co2_taxes, t_range, n_iter, params_names, CO2=None, p_adv_vary=True):
+    t0 = t_range[0]
+    tN = t_range[1]
+    x = convert_x_time_2020(t0, tN)
+    x_label = "Time"
+    y_all = co2_emit_probilistic_v(mdp_fh_co2_taxes, t0, tN, n_iter, p_adv_vary)
+    y_all, scale_str = scale_y_dollar_data(y_all)
+    y_label = format_ylabel_dollar(scale_str).replace("Cost", "CO2 Emissions").replace("USD", "tons")
+    title = "Average Annual CO2 Emissions by CO2 Tax Schedule"
+    return mplt.plot_multiple_line(x, y_all, 0, x_label, y_label, params_names, title, CO2, is_fixed=False)
+
+
+def co2_emit_probilistic_v(mdp_fh_co2_taxes, t0, tN, n_iter, p_adv_vary):
+    emit_all = []
+    for mdp_fh in mdp_fh_co2_taxes:
+        policy_all = []
+        runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
+        for iteration in runs:
+            policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
+        y_emit = [calc_co2_emit_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
+        y_emit = np.sum(y_emit, axis=0)/n_iter
+        emit_all.append(y_emit)
+    return np.asarray(emit_all)
+
+
+# Average annual and cumulative CO2 emissions and taxes of optimal policy with stochastic tech stage
+
+def co2_emit_tax_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_vary=True):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
@@ -230,7 +260,7 @@ def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_var
         y_tax, scale_str = scale_y_dollar_data(y_tax)
         y_label_tax = format_ylabel_dollar(scale_str).replace("Cost", "CO2 Tax").replace("USD", "USD/yr")
         labels = ["Total RES Plants", "Annual CO2 Emissions", "Annual CO2 Tax"]
-        title = "Annual CO2 Impacts for Avg Optimal Policy"
+        title = "Annual CO2 Impacts for Average Optimal Policy"
         return mplt.plot_multiple_line_twin_single_bar(x, [y_emit, y_tax], y_r, mdp_fh.n_plants, x_label, [y_label_emit, y_label_tax],
                                                        y_label_r, labels, title, is_annual=is_annual)
     else:
@@ -241,7 +271,7 @@ def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_var
         y_tax_cum, scale_str = scale_y_dollar_data(y_tax_cum)
         y_label_tax = format_ylabel_dollar(scale_str).replace("Cost", "CO2 Tax")
         labels = ["Total RES Plants", "Cumulative CO2 Emissions", "Cumulative CO2 Tax"]
-        title = "Cumulative CO2 Impacts for Avg Optimal Policy"
+        title = "Cumulative CO2 Impacts for Average Optimal Policy"
         return mplt.plot_multiple_line_twin_single_bar(x, [y_emit_cum, y_tax_cum], y_r, mdp_fh.n_plants, x_label, [y_label_emit, y_label_tax],
                                                        y_label_r, labels, title, is_annual=is_annual)
 
@@ -249,8 +279,8 @@ def co2_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, p_adv_var
 def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
     policy_all = []
     runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
-    for techstages in runs:
-        policy_all.append(get_opt_policy_vary_techstage(mdp_fh, techstages))
+    for iteration in runs:
+        policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
     y_r = [extract_idx_annotated_policy(policy[t0:tN], 'r') for policy in policy_all]
     y_r = np.sum(y_r, axis=0)/n_iter
     y_emit = [calc_co2_emit_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
@@ -272,81 +302,88 @@ def calc_co2_tax_annotated_policy(mdp_fh, policy):
 # STORAGE
 
 
-def storage_reductions_wrapper(mdp_fh_reduced, t_range, reductions, budget=None, RES=None):
+def storage_reductions_wrapper(mdp_fh_reduced, t_range, n_iter, reductions, budget=0, RES=0, p_adv_vary=True):
     t0 = t_range[0]
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
     storage_costs = mdp_extract_storage_costs(mdp_fh_reduced)
     percent_reductions = ["BSS: {} , PHS: {} $/kW ({:.0f}%)"
-                          .format(round(s[0][0]*frac), round(s[1]*frac), 
+                          .format(round(s[0]), round(s[1]),
                                   frac*100) for frac, s in zip(reductions, storage_costs)]
-    total_s, cum_s = total_cost_reductions_wrapper(mdp_fh_reduced, t0, tN, x, x_label, storage_costs,
-                                                   reductions, percent_reductions, budget=budget)
-    total_r = res_penetration_reductions_wrapper(mdp_fh_reduced, t0, tN, x, x_label, storage_costs,
-                                                 reductions, percent_reductions, RES=RES)
+    total_s, cum_s = total_cost_reductions_wrapper(mdp_fh_reduced, t0, tN, n_iter, x, x_label, reductions,
+                                                   percent_reductions, budget, p_adv_vary)
+    total_r = res_penetration_reductions_wrapper(mdp_fh_reduced, t0, tN, n_iter, x, x_label, reductions,
+                                                 percent_reductions, RES, p_adv_vary)
     return ((total_s, cum_s), total_r)
 
 
-# Total annual and total cumulative cost given reductions in bhs/phs costs
+# Total annual and total cumulative cost of optimal policy given reductions in bhs/phs costs with stochastic tech stage
 
-def total_cost_reductions_wrapper(mdp_fh_reduced, t0, tN, x, x_label, storage_costs, reductions, percent_reductions, budget):
+def total_cost_reductions_wrapper(mdp_fh_reduced, t0, tN, n_iter, x, x_label, reductions, percent_reductions, budget, p_adv_vary):
     title = "Effect of Storage Costs on Total Annual Cost"
     title_cum = "Effect of Storage Costs on Total Cumulative Cost"
-    y_all = total_cost_storage_reductions(mdp_fh_reduced, t0, tN, reductions)
+    y_all = total_cost_storage_reductions(mdp_fh_reduced, t0, tN, n_iter, reductions, p_adv_vary)
     y_all, scale_str = scale_y_dollar_data(y_all)
     y_label = format_ylabel_dollar(scale_str)
-    if scale_str == "thousand":
-        budget /= 1e3
-    elif scale_str == "million":
-        budget /= 1e6
-    elif scale_str == "billion":
-        budget /= 1e9
-    elif scale_str == "trillion":
-        budget /= 1e12
+    if budget > 0:
+        if scale_str == "thousand":
+            budget /= 1e3
+        elif scale_str == "million":
+            budget /= 1e6
+        elif scale_str == "billion":
+            budget /= 1e9
+        elif scale_str == "trillion":
+            budget /= 1e12
     y_all_cum = np.cumsum(y_all, axis=1)
     y_all_cum, scale_str = scale_y_dollar_data(y_all_cum)
     y_label_cum = format_ylabel_dollar(scale_str)
-    total = mplt.plot_multiple_line(x, y_all, x_label, y_label, percent_reductions,
-                                    title, scalar=budget, scalar_name="Annual Budget", is_fixed=True)
-    cum = mplt.plot_multiple_line(x, y_all_cum, x_label, y_label_cum, percent_reductions,
-                                  title_cum, scalar=budget, scalar_name="Cumulative Budget", is_fixed=False)
+    total = mplt.plot_multiple_line(x, y_all, 0, x_label, y_label, percent_reductions,
+                                    title, budget, scalar_name="Annual Budget", is_fixed=True)
+    cum = mplt.plot_multiple_line(x, y_all_cum, 0, x_label, y_label_cum, percent_reductions,
+                                  title_cum, budget, scalar_name="Cumulative Budget", is_fixed=False)
     return total, cum
 
 
-# Renewable penetration given reductions in bhs/phs costs
+def total_cost_storage_reductions(mdp_fh_reduced, t0, tN, n_iter, reductions, p_adv_vary):
+    storage_all = []
+    for mdp_fh in mdp_fh_reduced:
+        policy_all = []
+        runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
+        for iteration in runs:
+            policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
+        y_cost = [calc_co2_tax_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
+        y_cost = np.sum(y_cost, axis=0)/n_iter
+        storage_all.append(y_cost)
+    return np.asarray(storage_all)
 
-def res_penetration_reductions_wrapper(mdp_fh_reduced, t0, tN, x, x_label, storage_costs, reductions, percent_reductions, RES):
-    storage_costs = mdp_extract_storage_costs(mdp_fh_reduced)
-    percent_reductions = ["BSS: {} , PHS: {} $/kW ({:.0f}%)"
-                          .format(round(s[0][0]*frac), round(s[1]*frac), 
-                                  frac*100) for frac, s in zip(reductions, storage_costs)]
+
+def calc_total_cost_annotated_policy(mdp_fh, policy):
+    return [mdp_fh.mdp_cost.calc_total_cost(t, v, r, a) for t, v, r, a in policy]
+
+
+# Renewable penetration of optimal policy given reductions in bhs/phs costs with stochastic tech stage
+
+def res_penetration_reductions_wrapper(mdp_fh_reduced, t0, tN, n_iter, x, x_label, reductions, percent_reductions, RES, p_adv_vary):
     y_label = "RES Penetration (%)"
     title = "Effect of Storage Costs on RES Penetration"
-    y_all = total_RES_storage_reductions(mdp_fh_reduced, t0, tN, reductions)
-    total = mplt.plot_multiple_line(x, y_all, x_label, y_label, percent_reductions, title,
+    y_all = total_RES_storage_reductions(mdp_fh_reduced, t0, tN, n_iter, reductions, p_adv_vary)
+    total = mplt.plot_multiple_line(x, y_all, 100, x_label, y_label, percent_reductions, title,
                                     scalar=RES, scalar_name="Target RES Penetration", is_fixed=True)
     return total
 
 
-def total_cost_storage_reductions(mdp_fh_reduced, t0, tN, reductions):
-    storage_all = []
-    for mdp_fh in mdp_fh_reduced:
-        # Make all cost reductions relative to tech stage 0.
-        opt_policy = get_opt_policy_trajectory(mdp_fh, 0)
-        y = total_cost_single_v(mdp_fh, t0, tN, 0, opt_policy)
-        storage_all.append(y)
-    return np.asarray(storage_all)
-
-
-def total_RES_storage_reductions(mdp_fh_reduced, t0, tN, reductions):
+def total_RES_storage_reductions(mdp_fh_reduced, t0, tN, n_iter, reductions, p_adv_vary):
     res_all = []
     for mdp_fh in mdp_fh_reduced:
-        # Make all cost reductions relative to tech stage 0.
-        opt_policy = get_opt_policy_trajectory(mdp_fh, 0)
-        y_r = extract_idx_annotated_policy(opt_policy[t0:tN], 'r')
-        y = [val*100/mdp_fh.n_plants for val in y_r]
-        res_all.append(y)
+        policy_all = []
+        runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
+        for iteration in runs:
+            policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
+        y_r = [extract_idx_annotated_policy(policy[t0:tN], 'r') for policy in policy_all]
+        y_r = np.sum(y_r, axis=0)/n_iter
+        y_r_percent = [val*100/mdp_fh.n_plants for val in y_r]
+        res_all.append(y_r_percent)
     return np.asarray(res_all)
 
 
@@ -433,14 +470,14 @@ def get_opt_policy_trajectory(mdp_fh, v):
     return policy_annotated
 
 
-def get_opt_policy_vary_techstage(mdp_fh, techstages):
+def get_opt_policy_vary_techstage(mdp_fh, iteration):
     opt_policy = mdp_fh.mdp_inst.policy
     policy_annotated = []
     t = 0
     r = 0
     v = 0
     for step in np.arange(0, mdp_fh.n_years):
-        v = techstages[step]
+        v = iteration[step]
         state = (t, v, r)
         idx = mdp_fh.state_to_id[state]
         a = opt_policy[idx][step]
@@ -453,13 +490,13 @@ def get_opt_policy_vary_techstage(mdp_fh, techstages):
 def mdp_extract_storage_costs(mdp_fh_all):
     storage_costs = []
     for mdp_fh in mdp_fh_all:
-        storage_costs.append([mdp_fh.params['c_bss_cap'], mdp_fh.params['c_phs_cap']])
+        storage_costs.append([mdp_fh.params['c_bss_cap'][0], mdp_fh.params['c_phs_cap']])
     return storage_costs
 
 
 def reduce_storage_costs_params(params, frac):
-    params_reduced = params
-    params_reduced['c_bss_cap'] = [c*frac for c in params_reduced['c_bss_cap']]
+    params_reduced = params.copy()
+    params_reduced['c_bss_cap'] = [params_reduced['c_bss_cap'][0]*frac for c in params_reduced['c_bss_cap']]
     params_reduced['c_phs_cap'] *= frac
     return params_reduced
 
@@ -469,16 +506,16 @@ def run_techstage_transition(mdp_fh, n_iter, p_adv_vary=True):
     for i in np.arange(n_iter):
         techstage = 0
         if p_adv_vary:
-            p_adv = mdp_fh.p_adv_tech_stage[0]
+            p_adv = mdp_fh.p_adv_tech[0]
         else:
-            p_adv = mdp_fh.p_adv_tech_stage
+            p_adv = mdp_fh.p_adv_tech
         for step in np.arange(1, mdp_fh.n_years):
             # Decide whether or not the tech stage advances this year.
             adv = np.random.binomial(1, p_adv)
             if adv and techstage < mdp_fh.n_tech_stages - 1:
                 if p_adv_vary:
                     if techstage < mdp_fh.n_tech_stages - 2:
-                        p_adv = mdp_fh.p_adv_tech_stage[techstage+1]
+                        p_adv = mdp_fh.p_adv_tech[techstage+1]
                 techstage += 1
             runs[i][step] = techstage
     return runs

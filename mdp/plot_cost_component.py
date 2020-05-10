@@ -14,10 +14,10 @@ def main(argv):
     parser = argparse.ArgumentParser(description="plot costs of following MDP instance optimal policy")
     parser.add_argument("-m", "--version", help="MDP model version", type=int)
     parser.add_argument("-p", "--paramsfile", help="txt file with version specific params dict")
+    parser.add_argument("-c", "--component", help="see single cost component")
+    parser.add_argument("-a", "--policy", help="txt file with policy as list", default=None)
     parser.add_argument("-t", "--timerange", help="see specific time range", nargs=2, type=int, default=None)
     parser.add_argument("-v", "--techstage", help="see single tech stage", type=int, default=None)
-    parser.add_argument("-a", "--policy", help="txt file with policy as list", default=None)
-    parser.add_argument("-c", "--component", help="see single tech stage")
     parser.add_argument("--save", help="save plots as png files", action='store_true')
     args = parser.parse_args()
 

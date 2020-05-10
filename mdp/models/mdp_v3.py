@@ -16,7 +16,7 @@ class MdpModelV3():
                             'res_capacity',
                             'res_lifetime',
                             'c_co2_init',
-                            'co2_inc',
+                            'c_co2_inc',
                             'co2_tax_type',
                             'c_ff_cap',
                             'c_ff_fix',
@@ -31,21 +31,14 @@ class MdpModelV3():
                             'c_bss_var',
                             'c_phs_cap',
                             'c_phs_fix',
-                            'p_adv_tech_stage',
+                            'p_adv_tech',
                             'disc_rate']
 
-    def run_param_ranges(self, param_ranges):
-        param_combos = it.product(**param_ranges.values())
-        for combo in param_combos:
-            params = self.create_params(combo)
-            mdp_fh = self.run_fh(params)
-            self.params_to_policy[params] = mdp_fh.mdp_inst.policy
-
-    def run_fh(self, params):
-        mdp_fh = MdpFiniteHorizonV3(params)
-        mdp_fh.initialize()
-        mdp_fh.run()
-        return mdp_fh
+    def create_params(self, param_list):
+        params = OrderedDict()
+        for i in np.arange(len(self.param_names)):
+            params[self.param_names[i]] = param_list[i]
+        return params
 
     def print_fh(self, mdp_fh):
         assert(mdp_fh is not None)
@@ -55,17 +48,24 @@ class MdpModelV3():
         print("\n\n")
         mdp_fh.print_rewards()
 
-    def create_params(self, param_list):
-        params = OrderedDict()
-        for i in np.arange(len(self.param_names)):
-            params[self.param_names[i]] = param_list[i]
-        return params
+    def run_fh(self, params):
+        mdp_fh = MdpFiniteHorizonV3(params.copy())
+        mdp_fh.initialize()
+        mdp_fh.run()
+        return mdp_fh
+
+    def run_param_ranges(self, param_ranges):
+        param_combos = it.product(**param_ranges.values())
+        for combo in param_combos:
+            params = self.create_params(combo)
+            mdp_fh = self.run_fh(params)
+            self.params_to_policy[params] = mdp_fh.mdp_inst.policy
 
 
 class MdpFiniteHorizonV3():
     def __init__(self, params):
         self.mdp_inst = None
-        self.params = params
+        self.params = params.copy()
         self.scale_down = 9
         # Cost
         self.mdp_cost = MdpCostCalculatorV3(params)
@@ -73,7 +73,7 @@ class MdpFiniteHorizonV3():
         self.n_years = params['n_years']
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
-        self.p_adv_tech_stage = params['p_adv_tech_stage']
+        self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
         # Dimensions
         self.A = self.n_plants + 1
@@ -276,9 +276,9 @@ class MdpFiniteHorizonV3():
             state_next_v = (t+1, v+1, r+a_actual)
             idx_next_v = self.state_to_id[state_next_v]
             # Tech stage may remain the same.
-            self.transitions[a][idx_curr][idx_next] = 1.0 - self.p_adv_tech_stage[v]
+            self.transitions[a][idx_curr][idx_next] = 1.0 - self.p_adv_tech[v]
             # Tech stage may advance (assume only possible to advance by 1).
-            self.transitions[a][idx_curr][idx_next_v] = self.p_adv_tech_stage[v]
+            self.transitions[a][idx_curr][idx_next_v] = self.p_adv_tech[v]
         else:
             # Tech stage must remain the same.
             self.transitions[a][idx_curr][idx_next] = 1.0
@@ -286,11 +286,11 @@ class MdpFiniteHorizonV3():
 
 class MdpCostCalculatorV3():
     def __init__(self, params):
-        self.params = params
+        self.params = params.copy()
         self.n_plants = params['n_plants']
         # CO2
         self.c_co2_init = params['c_co2_init']
-        self.co2_inc = params['co2_inc']
+        self.c_co2_inc = params['c_co2_inc']
         self.co2_tax_type = params['co2_tax_type']
         # FF
         self.ff_size = params['ff_size']
@@ -387,7 +387,7 @@ class MdpCostCalculatorV3():
     def co2_emit(self, f):
         kw_plant = self.ff_size*self.ff_capacity
         hours_yr = 365*24
-        return f * (self.ff_emit*kw_plant*hours_yr)
+        return f * (self.ff_emit/1e3*kw_plant*hours_yr)
 
     def co2_tax(self, t, f):
         if self.co2_tax_type == "LINEAR":
@@ -399,11 +399,11 @@ class MdpCostCalculatorV3():
 
     def co2_tax_linear(self, t, f):
         co2_emit = self.co2_emit(f)
-        return co2_emit * (self.c_co2_init+(self.co2_inc*t))
+        return co2_emit * (self.c_co2_init+(self.c_co2_inc*t))
 
     def co2_tax_exponential(self, t, f):
         co2_emit = self.co2_emit(f)
-        return co2_emit * (self.c_co2_init*((1+self.co2_inc)**t))
+        return co2_emit * (self.c_co2_init*((1+self.c_co2_inc/100)**t))
 
     # RENEWABLE PLANTS
 

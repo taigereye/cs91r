@@ -56,8 +56,8 @@ def main(argv):
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
-    fig_annual = mv.co2_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=True, p_adv_vary=p_adv_vary)
-    fig_cum = mv.co2_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=False, p_adv_vary=p_adv_vary)
+    fig_annual = mv.co2_emit_tax_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=True, p_adv_vary=p_adv_vary)
+    fig_cum = mv.co2_emit_tax_wrapper(mdp_fh, policy, [t0, tN], args.iterations, is_annual=False, p_adv_vary=p_adv_vary)
 
     if args.save:
         fig_annual.savefig(visuals_dir / "g_v{}_co2_emit_tax_ann_{}.png".format(args.version, paramsfile))

@@ -3,8 +3,9 @@ from matplotlib.patches import Patch
 import numpy as np
 
 
-def plot_heatmap(x, y_2D, x_label, y_label, title):
+def plot_heatmap(x, y_2D, y_max, x_label, y_label, title):
     fig, ax = plt.subplots()
+    # im = ax.imshow(y_2D, cmap="YlGn", vmin=-2, vmax=y_max)
     im = ax.imshow(y_2D, cmap="YlGn")
     threshold = im.norm(np.max(y_2D))/2
     for i in range(y_2D.shape[0]):
@@ -100,12 +101,12 @@ def plot_multiple_bar_stacked_double(x, y_pair_all_v, x_label, y_label, legend_l
     return fig
 
 
-def plot_multiple_line(x, y_all, x_label, y_label, legend_labels, title, scalar=None, scalar_name=None, is_fixed=False):
-    color_map = get_color_map(len(legend_labels))
+def plot_multiple_line(x, y_all, y_max, x_label, y_label, labels, title, scalar, scalar_name=None, is_fixed=False):
+    color_map = get_color_map(len(labels))
     colors = [color_map(c) for c in np.arange(y_all.shape[0])]
     fig, ax = plt.subplots()
     for i in np.arange(y_all.shape[0]):
-        ax.plot(x, y_all[i], color=colors[i], label=legend_labels[i])
+        ax.plot(x, y_all[i], color=colors[i], label=labels[i])
     if scalar:
         if is_fixed:
             ax.axhline(y=scalar, color='k', linestyle='dashed', label=scalar_name)
@@ -114,13 +115,16 @@ def plot_multiple_line(x, y_all, x_label, y_label, legend_labels, title, scalar=
             ax.plot(x, y_scalar, color='k', linestyle='dashed', label=scalar_name)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label)
+    if y_max:
+        ax.set_ylim(0, y_max)
+    ax.set_ylim(bottom=0)
     ax.legend(loc='best')
     ax.set_title(title)
     fig.tight_layout()
     return fig
 
 
-def plot_multiple_line_twin_single_bar(x, y_lines, y_bar, n_plants, x_label, y_label_lines, y_label_bar, labels, title, is_annual=False):
+def plot_multiple_line_twin_single_bar(x, y_lines, y_bar, y_bar_max, x_label, y_label_lines, y_label_bar, labels, title, is_annual=False):
     colors = ['g', 'r', 'b', 'darkred', 'midnightblue']
     if is_annual:
         c = 1
@@ -140,7 +144,7 @@ def plot_multiple_line_twin_single_bar(x, y_lines, y_bar, n_plants, x_label, y_l
     axB.spines["right"].set_position(("axes", 1.1))
     axB.spines["right"].set_visible(True)
     axB.set_ylabel(y_label_bar)
-    axB.set_ylim(0, n_plants)
+    axB.set_ylim(0, y_bar_max)
     axB.yaxis.label.set_color(colors[0])
     axB.legend(loc='upper right')
     lines = ll+lr
@@ -176,17 +180,18 @@ def plot_single_bar_double(x, y_pair, x_label, y_label, title, w=0.30, bar_label
     return fig
 
 
-def plot_single_bar_double_with_line(x, y_bar, y_line, x_label, y_bar_label, y_line_label, title, w=0.30):
+def plot_single_bar_double_twin_line(x, y_bar, y_line, x_label, y_label_bar, y_label_line, labels, title, w=0.30):
     fig, ax = plt.subplots()
-    ax.bar(x, y_bar[0], width=w, color='g', edgecolor='w')
-    ax.bar(x+w/2, y_bar[1], width=w/2, color='g', edgecolor='w', alpha=0.50)
+    ax.bar(x, y_bar[0], width=w, color='g', edgecolor='w', label=labels[0])
+    ax.bar(x+w/2, y_bar[1], width=w/2, color='g', edgecolor='w', label=labels[1], alpha=0.50)
     ax.grid(axis='y')
-    ax.set(xlabel=x_label, ylabel=y_bar_label)
+    ax.set(xlabel=x_label, ylabel=y_label_bar)
     ax.yaxis.label.set_color('g')
     axT = ax.twinx()
     axT.plot(x, y_line, color='b')
-    axT.set_ylabel(y_line_label)
+    axT.set_ylabel(y_label_line)
     axT.yaxis.label.set_color('b')
+    ax.legend(loc='upper left')
     ax.set_title(title)
     fig.tight_layout()
     return fig
