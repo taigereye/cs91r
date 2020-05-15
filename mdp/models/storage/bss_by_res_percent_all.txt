@@ -1,0 +1,3 @@
+Exponential function coefficients:
+a:0.027716622804997502
+b:0.04603954980895038
