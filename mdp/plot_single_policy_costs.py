@@ -63,16 +63,6 @@ def main(argv):
             print("error: tech stage {} out of range: {}".format(args.techstage, mdp_fh.n_tech_stages))
             sys.exit(2)
 
-    if args.timerange:
-        t0, tN = args.timerange
-        t0 = max(0, t0-1)
-        if tN - t0 > mdp_fh.n_years:
-            print("error: time range {}-{} out of range: {}".format(t0, tN, mdp_fh.n_tech_stages))
-            sys.exit(3)
-    else:
-        t0 = 0
-        tN = mdp_fh.n_years
-
     if args.policy:
         policies_dir = Path("visuals/v{}/policies".format(args.version))
         af = policies_dir / "a_v{}_{}.txt".format(args.version, args.policy)
@@ -98,6 +88,16 @@ def main(argv):
             else:
                 policy.append(mv.get_opt_policy_trajectory(mdp_fh, v))
         v_str = "all"
+
+    if args.timerange:
+        t0, tN = args.timerange
+        t0 = max(0, t0-1)
+        if tN - t0 > mdp_fh.n_years:
+            print("error: time range {}-{} out of range: {}".format(t0, tN, mdp_fh.n_tech_stages))
+            sys.exit(3)
+    else:
+        t0 = 0
+        tN = mdp_fh.n_years
 
     if args.granular:
         components = COMPONENTS_GRANULAR

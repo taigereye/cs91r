@@ -42,16 +42,6 @@ def main(argv):
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
 
-    if args.timerange:
-        t0, tN = args.timerange
-        t0 = max(0, t0-1)
-        if tN - t0 > mdp_fh.n_years:
-            print("error: time range {}-{} out of range: {}".format(t0, tN, mdp_fh.n_tech_stages))
-            sys.exit(3)
-    else:
-        t0 = 0
-        tN = mdp_fh.n_years
-
     if args.policy:
         policies_dir = Path("visuals/v{}/policies".format(args.version))
         af = policies_dir / "a_v{}_{}.txt".format(args.version, args.policy)
@@ -64,6 +54,16 @@ def main(argv):
     else:
         policy_type = "optimal"
         policy = [mv.get_opt_policy_trajectory(mdp_fh, v) for v in np.arange(mdp_fh.n_tech_stages)]
+
+    if args.timerange:
+        t0, tN = args.timerange
+        t0 = max(0, t0-1)
+        if tN - t0 > mdp_fh.n_years:
+            print("error: time range {}-{} out of range: {}".format(t0, tN, mdp_fh.n_tech_stages))
+            sys.exit(3)
+    else:
+        t0 = 0
+        tN = mdp_fh.n_years
 
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))

@@ -41,6 +41,8 @@ def main(argv):
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
 
+    policy = [mv.get_opt_policy_trajectory(mdp_fh, v) for v in np.arange(mdp_fh.n_tech_stages)]
+
     if args.timerange:
         t0, tN = args.timerange
         t0 = max(0, t0-1)
@@ -51,8 +53,6 @@ def main(argv):
         t0 = 0
         tN = mdp_fh.n_years
 
-    policy = [mv.get_opt_policy_trajectory(mdp_fh, v) for v in np.arange(mdp_fh.n_tech_stages)]
-
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
@@ -61,7 +61,7 @@ def main(argv):
 
     if args.save:
         fig_annual.savefig(visuals_dir / "g_v{}_co2_emit_tax_ann_{}.png".format(args.version, paramsfile))
-        fig_annual.savefig(visuals_dir / "g_v{}_co2_emit_tax_cum_{}.png".format(args.version, paramsfile))
+        fig_cum.savefig(visuals_dir / "g_v{}_co2_emit_tax_cum_{}.png".format(args.version, paramsfile))
     plt.show()
 
 

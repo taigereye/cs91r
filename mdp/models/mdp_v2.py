@@ -371,14 +371,15 @@ class MdpCostCalculatorV2():
 
     def _ff_om(self, f):
         kw_plant = self.ff_size*self.ff_capacity
-        ff_om_fix = self.c_ff_fix*kw_plant
-        ff_om_var = self.c_ff_var*kw_plant
+        hours_yr = 365*24
+        ff_om_fix = self.c_ff_fix*self.ff_size
+        ff_om_var = self.c_ff_var*kw_plant*hours_yr
         return f * (ff_om_fix+ff_om_var)
 
     def _ff_total(self, f):
         ff_om = self._ff_om(f)
         ff_replace = self._ff_replace(f)
-        return f * (ff_om+ff_replace)
+        return f * ff_om+ff_replace
 
     # CARBON TAX
 

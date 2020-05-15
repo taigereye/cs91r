@@ -366,22 +366,6 @@ class MdpCostCalculatorV3():
         storage_total = self._storage_total(v, r, a)
         return co2_tax + ff_total + res_total + storage_total
 
-    # FOSSIL FUEL PLANTS
-
-    def _ff_replace(self, f):
-        return f * (self.c_ff_cap*self.ff_size/self.ff_lifetime)
-
-    def _ff_om(self, f):
-        kw_plant = self.ff_size*self.ff_capacity
-        ff_om_fix = self.c_ff_fix*kw_plant
-        ff_om_var = self.c_ff_var*kw_plant
-        return f * (ff_om_fix+ff_om_var)
-
-    def _ff_total(self, f):
-        ff_om = self._ff_om(f)
-        ff_replace = self._ff_replace(f)
-        return f * (ff_om+ff_replace)
-
     # CARBON TAX
 
     def co2_emit(self, f):
@@ -390,12 +374,12 @@ class MdpCostCalculatorV3():
         return f * (self.ff_emit/1e3*kw_plant*hours_yr)
 
     def co2_tax(self, t, f):
-        if self.co2_tax_type == "LINEAR":
+        if self.co2_tax_type == "LIN":
             return self.co2_tax_linear(t, f)
-        elif self.co2_tax_type == "EXPONENTIAL":
+        elif self.co2_tax_type == "EXP":
             return self.co2_tax_exponential(t, f)
         else:
-            raise ValueError("co2_tax_type must be LINEAR or EXPONENTIAL: {}".format(self.co2_tax_type))
+            raise ValueError("co2_tax_type must be LIN or EXP: {}".format(self.co2_tax_type))
 
     def co2_tax_linear(self, t, f):
         co2_emit = self.co2_emit(f)
@@ -405,18 +389,41 @@ class MdpCostCalculatorV3():
         co2_emit = self.co2_emit(f)
         return co2_emit * (self.c_co2_init*((1+self.c_co2_inc/100)**t))
 
+    # FOSSIL FUEL PLANTS
+
+    def _ff_replace(self, f):
+        return f * (self.c_ff_cap*self.ff_size/self.ff_lifetime)
+
+    def _ff_om(self, f):
+        kw_plant = self.ff_size*self.ff_capacity
+        hours_yr = 365*24
+        ff_om_fix = self.c_ff_fix*self.ff_size
+        ff_om_var = 10*self.c_ff_var*kw_plant*hours_yr
+        return f * (ff_om_fix+ff_om_var)
+
+    def _ff_total(self, f):
+        ff_om = self._ff_om(f)
+        ff_replace = self._ff_replace(f)
+        return ff_om+ff_replace
+
     # RENEWABLE PLANTS
 
     def _res_cap(self, v, a):
         return a * (self.c_res_cap[v]*self.res_size)
+
+    def _res_om(self, v, r, a):
+        res_om_fix = self.c_res_fix*self.res_size
+        return (r + a) * res_om_fix
 
     def _res_replace(self, v, r):
         return r * (self.c_res_cap[v]*self.res_size/self.res_lifetime)
 
     def _res_total(self, v, r, a):
         res_cap = self._res_cap(v, a)
+        # res_om = self._res_om(v, r, a)
         res_replace = self._res_replace(v, r)
-        return a * res_cap + r * res_replace
+        # return res_cap+res_om+res_replace
+        return res_cap+res_replace
 
     # BATTERIES
 
@@ -425,7 +432,7 @@ class MdpCostCalculatorV3():
         return self.c_bss_cap[v]*kwh_bss
 
     def _bss_om(self, r, a):
-        kwh_bss = self.storage_mix[0] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        kwh_bss = self.storage_mix[0]*self._storage_kwh(r, a)
         bss_om_fix = self.c_bss_fix*kwh_bss/(365*24)
         bss_om_var = self.c_bss_var*kwh_bss
         return bss_om_fix+bss_om_var
@@ -442,7 +449,7 @@ class MdpCostCalculatorV3():
         return self.c_phs_cap*kwh_phs
 
     def _phs_om(self, r, a):
-        kwh_phs = self.storage_mix[1] * (self._storage_kwh(r, a) - self._storage_kwh(r, 0))
+        kwh_phs = self.storage_mix[1]*self._storage_kwh(r, a)
         phs_om_fix = self.c_phs_fix*kwh_phs/(365*24)
         return phs_om_fix
 
@@ -456,7 +463,6 @@ class MdpCostCalculatorV3():
     def _storage_kwh(self, r, a):
         kwh_sys_total = self.ff_size*self.ff_capacity * self.n_plants * 24*365
         res_percent = (r+a)*100 / self.n_plants
-        # Model grid reliability issues as exponentially increasing storage requirement.
         storage_percent = self.storage_coefs[0] * np.exp(self.storage_coefs[1]*res_percent) + self.storage_coefs[2]
         return storage_percent/100*kwh_sys_total
 
