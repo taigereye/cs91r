@@ -257,10 +257,10 @@ Run the following command, specifying the model version and parameters file as a
 $ python plot_co2_impacts.py -m <model_version> -p <params_file> [-t time_0 time_N] [-i <iterations>]
 ```
 
-To see the annual CO2 emissions as calculated above but for the optimal policy under different sets of parameters, run the following command, specifying the model version as above. Provide at least one argument to the `-p` option in order to see a curve on the plot.
+To see the annual CO2 emissions as calculated above but for the optimal policy under different sets of parameters, run the following command, specifying the model version as above. Provide at least one argument to the `-p` option in order to see a curve on the plot. In a second plot, this command also visualizes RES penetration for the optimal policy under the different sets of parameters.
 
 ```
-$ python plot_compare_co2_emit.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
+$ python plot_compare_co2_res.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
 ```
 
 Finally, run the following command, specifying the model version as above, to compare the total annual and cumulative costs for the optimal policy under different sets of parameters. Provide at least one argument to the `-p` option in order to see a curve on the plot.
