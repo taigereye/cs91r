@@ -225,7 +225,7 @@ $ python plot_single_policy_costs.py -m <model_version> -p <params_file> [-t tim
 To generate the same three plots for two different policies, run the following command, specifying the model version and parameters file as above. Here if the second policy file is unspecified then the first policy file is compared to the optimal policy. The two policies will be plotted as adjacent bars and if the tech stage is unspecified then as `n_tech_stages` pairs of adjacent bars.
 
 ```
-$ python plot_compare_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
+$ python plot_double_policy_costs.py -m <model_version> -p <params_file> [-t time_0 time_N] [-v <tech_stage>] -a <policy_file_1> [<policy_file_2>]
 ```
 
 NOTE: Unless the `granular` option is turned on, only the following cost components will be shown:
@@ -257,8 +257,14 @@ Run the following command, specifying the model version and parameters file as a
 $ python plot_co2_impacts.py -m <model_version> -p <params_file> [-t time_0 time_N] [-i <iterations>]
 ```
 
-To see the annual CO2 emissions as calculated above but for different sets of parameters, run the following command, specifying the model version as above. Provide at least one argument to the `-p` option in order to see a curve on the plot.
+To see the annual CO2 emissions as calculated above but for the optimal policy under different sets of parameters, run the following command, specifying the model version as above. Provide at least one argument to the `-p` option in order to see a curve on the plot. In a second plot, this command also visualizes RES penetration for the optimal policy under the different sets of parameters.
 
 ```
-$ python plot_compare_co2_emit.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
+$ python plot_compare_co2_res.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
+```
+
+Finally, run the following command, specifying the model version as above, to compare the total annual and cumulative costs for the optimal policy under different sets of parameters. Provide at least one argument to the `-p` option in order to see a curve on the plot.
+
+```
+$ python plot_compare_total_costs.py -m <model_version> -p [<params_file_1> <params_file_2> <params_file_3> ...] [-t time_0 time_N] [-i <iterations>]
 ```
