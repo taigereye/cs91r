@@ -6,8 +6,9 @@ import numpy as np
 from pathlib import Path
 
 import mdp.visuals.mdp_visualize as mv
-from mdp.models.mdp_v2 import MdpModelV2
-from mdp.models.mdp_v3 import MdpModelV3
+from mdp.models.MdpV2 import MdpModelV2
+from mdp.models.MdpV3 import MdpModelV3
+from mdp.models.MdpV4 import MdpModelV4
 
 
 def main(argv):
@@ -34,8 +35,10 @@ def main(argv):
     mdp_model = None
     if int(args.version) == 2:
         mdp_model = MdpModelV2()
-    if int(args.version) == 3:
+    elif int(args.version) == 3:
         mdp_model = MdpModelV3()
+    elif int(args.version) == 4:
+        mdp_model = MdpModelV4()
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))

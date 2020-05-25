@@ -1,0 +1,7 @@
+MDP V3 run with baseline params and CLC carbon tax
+
+ACTUAL MEAN: 
+[51.8e6, 51.4e6, 50e6, 45.9e6, 40.8e6, 38.4e6, 37e6, 36.6e6, 36.6e6, 25.9e6]
+
+DECREMENTED BY 2.75:
+[49e6, 46.3e6, 43.5e6, 40.8e6, 38e6, 35.3e6, 32.5e6, 29.8e6, 27.05e6, 24.3e6]

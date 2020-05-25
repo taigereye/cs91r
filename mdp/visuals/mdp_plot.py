@@ -216,8 +216,8 @@ def plot_single_bar_double_twin_line(x, y_bar, y_line, x_label, y_label_bar, y_l
     if not colors:
         colors = ['b', 'g']
     fig, ax = plt.subplots()
-    ax.bar(x, y_bar[0], width=w, color=colors[0], edgecolor='w', label=labels[0])
-    ax.bar(x+w/2, y_bar[1], width=w/2, color=colors[0], edgecolor='w', label=labels[1], alpha=0.50)
+    ax.bar(x, y_bar[0], width=w, color=colors[1], edgecolor='w', label=labels[0])
+    ax.bar(x+w/2, y_bar[1], width=w/2, color=colors[1], edgecolor='w', label=labels[1], alpha=0.50)
     ax.grid(axis='y')
     ax.set(xlabel=x_label, ylabel=y_label_bar)
     ax.yaxis.label.set_color(colors[1])

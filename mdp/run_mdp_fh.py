@@ -3,10 +3,11 @@ import sys
 
 from pathlib import Path
 
-from mdp.models.mdp_v0 import MdpModelV0
-from mdp.models.mdp_v1 import MdpModelV1
-from mdp.models.mdp_v2 import MdpModelV2
-from mdp.models.mdp_v3 import MdpModelV3
+from mdp.models.MdpV0 import MdpModelV0
+from mdp.models.MdpV1 import MdpModelV1
+from mdp.models.MdpV2 import MdpModelV2
+from mdp.models.MdpV3 import MdpModelV3
+from mdp.models.MdpV4 import MdpModelV4
 
 
 def main(argv):
@@ -30,6 +31,8 @@ def main(argv):
         mdp_model = MdpModelV2()
     elif args.version == 3:
         mdp_model = MdpModelV3()
+    elif args.version == 4:
+        mdp_model = MdpModelV4()
 
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))

@@ -1,6 +1,5 @@
 import numpy as np
 
-from mdp.models.mdp_v2 import MdpModelV2
 import mdp.visuals.mdp_plot as mplt
 
 
@@ -316,7 +315,7 @@ def res_probabilistic_v(mdp_fh_res_percents, t0, tN, n_iter, p_adv_vary):
 
 # CO2 EMISSIONS
 
-# Average annual CO2 emissions of optimal policy for different parameters with stochastic tech stage
+# Average cumulative CO2 emissions of optimal policy for different parameters with stochastic tech stage
 
 def opt_policy_co2_emit(mdp_fh_co2_taxes, t_range, n_iter, params_names, CO2=None, p_adv_vary=True):
     t0 = t_range[0]
@@ -325,7 +324,7 @@ def opt_policy_co2_emit(mdp_fh_co2_taxes, t_range, n_iter, params_names, CO2=Non
     x_label = "Time"
     y_all = co2_emit_probilistic_v(mdp_fh_co2_taxes, t0, tN, n_iter, p_adv_vary)
     y_all, scale_str = scale_y_dollar_data(y_all)
-    y_label = format_ylabel_dollar(scale_str).replace("Cost", "CO2 Emissions").replace("USD", "tons")
+    y_label = format_ylabel_dollar(scale_str, is_annual=False).replace("Cost", "CO2 Emissions").replace("USD", "tons")
     title = "Average Annual CO2 Emissions"
     return mplt.plot_multiple_line(x, y_all, 0, x_label, y_label, params_names, title, CO2, colors=['orangered', 'b'], is_fixed=False)
 
@@ -339,7 +338,7 @@ def co2_emit_probilistic_v(mdp_fh_co2_taxes, t0, tN, n_iter, p_adv_vary):
             policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
         y_emit = [calc_co2_emit_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
         y_emit = np.sum(y_emit, axis=0)/n_iter
-        y_emit = np.cumsum(y_emit)
+        # y_emit = np.cumsum(y_emit)
         emit_all.append(y_emit)
     return np.asarray(emit_all)
 
@@ -388,14 +387,6 @@ def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
     y_tax = np.sum(y_tax, axis=0)/n_iter
     runs = np.sum(runs, axis=0)[t0:tN]/n_iter
     return runs, y_r, y_emit, y_tax
-
-
-def calc_co2_emit_annotated_policy(mdp_fh, policy):
-    return [mdp_fh.mdp_cost.co2_emit(mdp_fh.n_plants-(r+a)) for t, v, r, a in policy]
-
-
-def calc_co2_tax_annotated_policy(mdp_fh, policy):
-    return [mdp_fh.mdp_cost.co2_tax(t, mdp_fh.n_plants-(r+a)) for t, v, r, a in policy]
 
 
 # STORAGE
@@ -501,6 +492,14 @@ def calculate_cost_scale(min_value):
 
 def calc_total_cost_annotated_policy(mdp_fh, policy):
     return [mdp_fh.mdp_cost.calc_total_cost(t, int(v), r, a) for t, v, r, a in policy]
+
+
+def calc_co2_emit_annotated_policy(mdp_fh, policy):
+    return [mdp_fh.mdp_cost.co2_emit(mdp_fh.n_plants-(r+a)) for t, v, r, a in policy]
+
+
+def calc_co2_tax_annotated_policy(mdp_fh, policy):
+    return [mdp_fh.mdp_cost.co2_tax(t, mdp_fh.n_plants-(r+a)) for t, v, r, a in policy]
 
 
 def convert_x_time_2020(t0, tN):

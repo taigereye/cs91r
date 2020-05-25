@@ -5,6 +5,7 @@ from pathlib import Path
 
 from mdp.models.mdp_v2 import MdpFiniteHorizonV2
 from mdp.models.mdp_v3 import MdpFiniteHorizonV3
+from mdp.models.mdp_v4 import MdpFiniteHorizonV4
 
 
 def main(argv):
@@ -29,6 +30,8 @@ def main(argv):
         mdp_fh = MdpFiniteHorizonV2(params)
     elif int(args.version) == 3:
         mdp_fh = MdpFiniteHorizonV3(params)
+    elif int(args.version) == 4:
+        mdp_fh = MdpFiniteHorizonV4(params)
 
     assert(mdp_fh is not None)
 
