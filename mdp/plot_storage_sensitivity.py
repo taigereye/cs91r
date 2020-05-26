@@ -24,7 +24,7 @@ def main(argv):
     args = parser.parse_args()
 
     if int(args.version) < 2:
-        print("error: plot_storage_sensitivity only supported for MDP v2 or higher.")
+        print("error: plot_storage_sensitivity only supported for MDP V2 or higher.")
         sys.exit(1)
 
     params_dir = Path("results/v{}/params".format(args.version))

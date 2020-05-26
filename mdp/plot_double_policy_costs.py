@@ -40,7 +40,7 @@ def main(argv):
     args = parser.parse_args()
 
     if int(args.version) < 2:
-        print("error: plot_double_policy_costs only supported for MDP v2 or higher.")
+        print("error: plot_double_policy_costs only supported for MDP V2 or higher.")
         sys.exit(1)
 
     if args.policies is not None and len(args.policies) not in (1, 2):

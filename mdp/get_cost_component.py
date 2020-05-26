@@ -3,9 +3,9 @@ import sys
 
 from pathlib import Path
 
-from mdp.models.mdp_v2 import MdpFiniteHorizonV2
-from mdp.models.mdp_v3 import MdpFiniteHorizonV3
-from mdp.models.mdp_v4 import MdpFiniteHorizonV4
+from mdp.models.mdp_V2 import MdpFiniteHorizonV2
+from mdp.models.mdp_V3 import MdpFiniteHorizonV3
+from mdp.models.mdp_V4 import MdpFiniteHorizonV4
 
 
 def main(argv):
@@ -16,7 +16,7 @@ def main(argv):
     args = parser.parse_args()
 
     if int(args.version) < 2:
-        print("error: calc_partial_costs only supported for MDP v2 or higher.")
+        print("error: calc_partial_costs only supported for MDP V2 or higher.")
         sys.exit(2)
 
     params_dir = Path("results/v{}/params".format(args.version))

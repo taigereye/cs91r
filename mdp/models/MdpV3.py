@@ -86,7 +86,7 @@ class MdpFiniteHorizonV3():
         self.rewards = None
 
     def initialize(self):
-        print("\nInitializing MDP v3...\n")
+        print("\nInitializing MDP V3...\n")
         self._enumerate_states()
         self._trans_probs_wrapper()
         self._rewards_wrapper()
@@ -97,7 +97,7 @@ class MdpFiniteHorizonV3():
         print("Initialization done.\n")
 
     def run(self):
-        print("Running MDP v3...")
+        print("Running MDP V3...")
         self.mdp_inst.run()
         print("MDP done.\n")
 

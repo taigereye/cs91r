@@ -11,6 +11,7 @@ class MdpModelV4():
         self.param_names = ['n_years',
                             'n_tech_stages',
                             'n_plants',
+                            'n_tax_levels',
                             'ff_size',
                             'ff_capacity',
                             'ff_lifetime',
@@ -68,20 +69,21 @@ class MdpFiniteHorizonV4():
     def __init__(self, params):
         self.mdp_inst = None
         self.params = params.copy()
-        self.scale_down = 9
         # Cost
         self.mdp_cost = MdpCostCalculatorV4(params)
         # Parameters
         self.n_years = params['n_years']
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
-        self.n_adjustments = 3
-        self.n_tax_levels = 5
+        self.n_tax_levels = params['n_tax_levels']
         self.co2_tax_cycle = params['co2_tax_cycle']
         self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
         self.emit_targets = params['emit_targets']
         self.target_delta = params['target_delta']
+        # Constants
+        self.scale_down = 9
+        self.n_adjustments = 3
         # Dimensions
         self.A = self.n_plants + 1
         self.S = (self.n_years+1) * self.n_tech_stages * (self.n_plants+1) * self.n_adjustments * self.n_tax_levels
@@ -355,8 +357,9 @@ class MdpFiniteHorizonV4():
 class MdpCostCalculatorV4():
     def __init__(self, params):
         self.params = params.copy()
+        # General
         self.n_plants = params['n_plants']
-        self.n_tax_levels = 5
+        self.n_tax_levels = params['n_tax_levels']
         # CO2 tax
         self.c_co2_base_levels = params['c_co2_base_levels']
         self.c_co2_base = self.c_co2_base_levels[self.n_tax_levels//2]
