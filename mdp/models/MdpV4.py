@@ -343,13 +343,13 @@ class MdpFiniteHorizonV4():
         (t, v, r, l, e) = state
         l_updated = l
         e_updated = e
-        if t % self.co2_tax_cycle == 0:
+        if t > 5 and t % self.co2_tax_cycle == 0:
             if e == 0:
                 l_updated = l
-            elif e < 0:
-                l_updated = max(0, l+e)
-            elif e > 0:
-                l_updated = min(self.n_tax_levels-1, l+e)
+            elif e == 1:
+                l_updated = max(0, l-1)
+            elif e == 2:
+                l_updated = min(self.n_tax_levels-1, l+1)
             e_updated = self.calc_next_adjustment(t, r)
         return l_updated, e_updated
 
@@ -457,7 +457,7 @@ class MdpCostCalculatorV4():
         hours_yr = 365*24
         return f * (self.ff_emit/1e3*kw_plant*hours_yr)
 
-    def co2_tax(self, t, l, f):
+    def co2_price(self, t, l, f):
         c_co2_base, c_co2_inc = self._adjust_co2_tax(l)
         if self.co2_tax_type == "LIN":
             return self._co2_tax_linear(t, f, c_co2_base, c_co2_inc)
@@ -466,13 +466,15 @@ class MdpCostCalculatorV4():
         else:
             raise ValueError("co2_tax_type must be LIN or EXP: {}".format(self.co2_tax_type))
 
-    def _co2_tax_linear(self, t, f, c_co2_base, c_co2_inc):
+    def co2_tax(self, t, l, f):
         co2_emit = self.co2_emit(f)
-        return co2_emit * (c_co2_base+(c_co2_inc*t))
+        return co2_emit * self.co2_price(t, l, f)
+
+    def _co2_tax_linear(self, t, f, c_co2_base, c_co2_inc):
+        return c_co2_base + (c_co2_inc*t)
 
     def _co2_tax_exponential(self, t, f, c_co2_base, c_co2_inc):
-        co2_emit = self.co2_emit(f)
-        return co2_emit * (c_co2_base*((1+c_co2_inc/100)**t))
+        return c_co2_base * ((1+c_co2_inc/100)**t)
 
     def _adjust_co2_tax(self, l):
         # Default CO2 tax is always middle level.

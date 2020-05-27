@@ -32,6 +32,7 @@ def main(argv):
     parser.add_argument("-p", "--paramsfile", help="txt file with version specific params as dict")
     parser.add_argument("-t", "--timerange", help="see specific time range", nargs=2, type=int, default=None)
     parser.add_argument("-i", "--iterations", help="number of simulations of tech stage transition", type=int, default=200)
+    parser.add_argument("--CI", help="show confidence intervals for single line plots", action='store_true')
     parser.add_argument("--save", help="save plots as png files", action='store_true')
     args = parser.parse_args()
 
@@ -67,28 +68,33 @@ def main(argv):
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
     mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range)
-    y_state = []
-    labels = ["Tech Stage", "Total RES Plants", "Tax Level", "Tax Adjustment"]
+    y_co2 = []
+    labels = ["Tax Level", "CO2 Price", "CO2 Tax", "CO2 Emissions"]
+    units = ["", " (USD)", " (USD/yr)", " (tons/yr)"]
 
-    var_codes = ['v', 'r', 'l', 'e']
-    for code in var_codes:
-        y = mdp_data.get_state_variable(mdp_fh, code)
-        y_state.append(y[0])
+    y_co2.append(mdp_data.get_state_variable(mdp_fh, 'l'))
+    y_co2.append(mdp_data.co2_current_price(mdp_fh))
+    y_co2.append(mdp_data.co2_tax_collected(mdp_fh))
+    y_co2.append(mdp_data.co2_emissions(mdp_fh))
 
     x = mdp_data.get_time_range(t_range)
 
     mdp_plot = MdpPlotter()
-    figs_state = []
-    for y, label in zip(y_state, labels):
+    figs_co2 = []
+    for y, label, unit in zip(y_co2, labels, units):
         title = "Average {}: {}".format(label, args.paramsfile)
-        mdp_plot.initialize(title, "Time (years)", label)
-        mdp_plot.plot_bars(x, [y], [args.paramsfile])
+        mdp_plot.initialize(title, "Time (years)", label+unit)
+        if args.CI:
+            mdp_plot.plot_lines(x, [y[0]], [args.paramsfile], y_lower=[y[1]], y_upper=[y[2]])
+        else:
+            mdp_plot.plot_lines(x, [y[0]], [args.paramsfile])
         fig = mdp_plot.finalize()
-        figs_state.append(fig)
+        figs_co2.append(fig)
 
+    strs = ["level", "price", "tax", "emit"]
     if args.save:
-        for fig, code in zip(figs_state, var_codes):
-            fig.savefig(visuals_dir / "g_v{}_state_{}_{}.png".format(args.version, code, args.paramsfile))
+        for fig, s in zip(figs_co2, strs):
+            fig.savefig(visuals_dir / "g_v{}_co2_{}_{}.png".format(args.version, s, args.paramsfile))
     plt.show()
 
 

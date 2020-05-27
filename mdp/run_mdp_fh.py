@@ -33,7 +33,6 @@ def main(argv):
         mdp_model = MdpModelV3()
     elif args.version == 4:
         mdp_model = MdpModelV4()
-
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)

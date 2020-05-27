@@ -30,8 +30,10 @@ def main(argv):
     parser = argparse.ArgumentParser(description="plot costs of following MDP instance optimal policy")
     parser.add_argument("-m", "--version", help="MDP model version", type=int)
     parser.add_argument("-p", "--paramsfile", help="txt file with version specific params as dict")
+    parser.add_argument("-e", "--targetsfile", help="txt file with CO2 emissions targets as list")
     parser.add_argument("-t", "--timerange", help="see specific time range", nargs=2, type=int, default=None)
     parser.add_argument("-i", "--iterations", help="number of simulations of tech stage transition", type=int, default=200)
+    parser.add_argument("--CI", help="show confidence intervals for single line plots", action='store_true')
     parser.add_argument("--save", help="save plots as png files", action='store_true')
     args = parser.parse_args()
 
@@ -63,32 +65,43 @@ def main(argv):
         tN = mdp_fh.n_years
     t_range = [t0, tN]
 
+    targets_dir = Path("visuals/v{}/targets".format(args.version))
+    tf = targets_dir / "e_v{}_{}.txt".format(args.version, args.targetsfile)
+    with open(tf, 'r') as targetsfile:
+        emit_targets = eval(targetsfile.read())
+    targetsfile.close()
+    # assert(len(emit_targets) == mdp_fh.n_years//mdp_fh.co2_tax_cycle)
+
     np.set_printoptions(linewidth=300)
     visuals_dir = Path("visuals/v{}/plots".format(args.version))
 
     mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range)
-    y_state = []
-    labels = ["Tech Stage", "Total RES Plants", "Tax Level", "Tax Adjustment"]
-
-    var_codes = ['v', 'r', 'l', 'e']
-    for code in var_codes:
-        y = mdp_data.get_state_variable(mdp_fh, code)
-        y_state.append(y[0])
+    y_res = mdp_data.res_penetration(mdp_fh)
+    y_emit = mdp_data.co2_emissions(mdp_fh)
 
     x = mdp_data.get_time_range(t_range)
+    x_targets = np.arange(0, mdp_fh.n_years, mdp_fh.co2_tax_cycle) + mdp_data.start_year
 
     mdp_plot = MdpPlotter()
-    figs_state = []
-    for y, label in zip(y_state, labels):
-        title = "Average {}: {}".format(label, args.paramsfile)
-        mdp_plot.initialize(title, "Time (years)", label)
-        mdp_plot.plot_bars(x, [y], [args.paramsfile])
-        fig = mdp_plot.finalize()
-        figs_state.append(fig)
+    # RES penetration
+    mdp_plot.initialize("Average RES Penetration: {}".format(args.paramsfile), "Time (years)", "RES Penetration (%)")
+    if args.CI:
+        mdp_plot.plot_lines(x, [y_res[0]], [args.paramsfile], y_lower=[y_res[1]], y_upper=[y_res[2]])
+    else:
+        mdp_plot.plot_lines(x, [y_res[0]], [args.paramsfile])
+    fig_res = mdp_plot.finalize()
+    # CO2 emissions (actual vs. target)
+    mdp_plot.initialize("Average Annual CO2 Emissions: {}".format(args.paramsfile), "Time (years)", "RES Penetration (%)")
+    if args.CI:
+        mdp_plot.plot_lines(x, [y_emit[0]], [args.paramsfile], y_lower=[y_emit[1]], y_upper=[y_emit[2]])
+    else:
+        mdp_plot.plot_lines(x, [y_emit[0]], [args.paramsfile])
+    fig_emit = mdp_plot.finalize()
+    mdp_plot.add_fixed_line(x_targets, emit_targets, "Target")
 
     if args.save:
-        for fig, code in zip(figs_state, var_codes):
-            fig.savefig(visuals_dir / "g_v{}_state_{}_{}.png".format(args.version, code, args.paramsfile))
+        fig_res.savefig(visuals_dir / "g_v{}_res_{}_{}.png".format(args.version, args.paramsfile))
+        fig_emit.savefig(visuals_dir / "g_v{}_target_{}_{}.png".format(args.version, args.paramsfile))
     plt.show()
 
 

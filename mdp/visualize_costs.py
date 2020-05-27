@@ -50,7 +50,6 @@ def main(argv):
     mdp_model = None
     if int(args.version) == 4:
         mdp_model = MdpModelV4()
-
     assert(mdp_model is not None)
     assert(mdp_model.param_names == list(params.keys()))
     mdp_fh = mdp_model.run_fh(params)
@@ -64,7 +63,6 @@ def main(argv):
     else:
         t0 = 0
         tN = mdp_fh.n_years
-
     t_range = [t0, tN]
 
     if args.granular:
@@ -83,15 +81,21 @@ def main(argv):
     x = mdp_data.get_time_range(t_range)
 
     mdp_plot = MdpPlotter()
-    mdp_plot.initialize("Time (years)", "Cost (USD/yr)", "Total Annual Cost: {}".format(args.paramsfile))
+    # Total cost
+    mdp_plot.initialize("Total Annual Cost: {}".format(args.paramsfile), "Time (years)", "Cost (USD/yr)")
     if args.CI:
-        fig_total = mdp_plot.plot_lines(x, [y_total[0]], [args.paramsfile], y_lower=y_total[1], y_upper=y_total[2])
+        mdp_plot.plot_lines(x, [y_total[0]], [args.paramsfile], y_lower=[y_total[1]], y_upper=[y_total[2]])
     else:
-        fig_total = mdp_plot.plot_lines(x, [y_total[0]], [args.paramsfile])
-    mdp_plot.initialize("Time (years)", "Cost (USD/yr)", "Absolute Cost Breakdown: {}".format(args.paramsfile))
-    fig_breakdown = mdp_plot.plot_stacked_bar(x, y_breakdown, components)
-    mdp_plot.initialize("Time (years)", "Cost (USD/yr)", "Percentage Cost Breakdown: {}".format(args.paramsfile))
-    fig_percents = mdp_plot.plot_stacked_bar(x, y_percents, components)
+        mdp_plot.plot_lines(x, [y_total[0]], [args.paramsfile])
+    fig_total = mdp_plot.finalize()
+    # Absolute cost breakdown
+    mdp_plot.initialize("Absolute Cost Breakdown: {}".format(args.paramsfile), "Time (years)", "Cost (USD/yr)")
+    mdp_plot.plot_stacked_bar(x, y_breakdown, components)
+    fig_breakdown = mdp_plot.finalize()
+    # Percentage cost breakdown
+    mdp_plot.initialize("Percentage Cost Breakdown: {}".format(args.paramsfile), "Time (years)", "Cost (%/yr)")
+    mdp_plot.plot_stacked_bar(x, y_percents, components)
+    fig_percents = mdp_plot.finalize()
 
     if args.save:
         fig_total.savefig(visuals_dir / "g_v{}_total_{}.png".format(args.version, args.paramsfile))
