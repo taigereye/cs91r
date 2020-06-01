@@ -1,5 +1,5 @@
 {
-'n_years': 50,
+'n_years': 20,
 'n_tech_stages': 3,
 'n_plants': 5,
 'n_tax_levels': 3,
@@ -9,7 +9,7 @@
 'res_capacity': 0.30,
 'res_lifetime': 25,
 'c_co2_base_levels': [31.84, 41.84, 51.84],
-'c_co2_inc_levels': [2, 5, 7],
+'c_co2_inc_levels': [3, 5, 7],
 'co2_tax_type': "EXP",
 'co2_tax_adjust': "BASE",
 'co2_tax_cycle': 5,

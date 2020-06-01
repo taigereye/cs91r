@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-import mdp.visuals.mdp_visualize as mv
+import mdp.analysis.mdp_visualize as mv
 from mdp.models.MdpV2 import MdpModelV2
 from mdp.models.MdpV3 import MdpModelV3
 from mdp.models.MdpV4 import MdpModelV4

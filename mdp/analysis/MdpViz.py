@@ -5,7 +5,7 @@ import pandas as pd
 
 
 class MdpDataGatherer():
-    def __init__(self, mdp_model, n_iter, t_range, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
+    def __init__(self, mdp_model, n_iter, t_range, ci_type="ABS", n_dev=1):
         self.mdp_model = mdp_model
         self.instances = OrderedDict()
         self.n_iter = n_iter
@@ -14,20 +14,12 @@ class MdpDataGatherer():
         self.start_year = 2020
         self.ci_type = ci_type
         self.n_dev = n_dev
-        self.q_lower = q_lower
-        self.q_upper = q_upper
 
     def add_mdp_instance(self, paramsfile, params):
         assert(self.mdp_model.param_names == list(params.keys()))
         mdp_fh = self.mdp_model.run_fh(params)
         self.instances[paramsfile] = mdp_fh
         return mdp_fh
-
-    def set_ci_type(self, ci_type, n_dev=1, q_lower=0.25, q_upper=0.75):
-        self.ci_type = ci_type
-        self.n_dev = n_dev
-        self.q_lower = q_lower
-        self.q_upper = q_upper
 
     ## COST
 
@@ -122,8 +114,7 @@ class MdpDataGatherer():
             tax_levels = self.get_tax_levels(mdp_fh)
             y_variables = self._policy_extract_state_variable(var_code, policy, tax_levels)
             y_all.append(y_variables)
-        y_mean = np.sum(y_all, axis=0)/self.n_iter
-        return y_mean
+        return self._calc_data_bounds(y_all)
 
     ## HELPER FUNCTIONS
 
@@ -160,38 +151,22 @@ class MdpDataGatherer():
             r += a
         return policy_annotated
 
-    # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
     def _calc_data_bounds(self, data_all, axis=0):
-        data = dict()
         if self.ci_type == "ABS":
-            mean, lower, upper = self._calc_data_bounds_abs(data_all, axis)
-        elif self.ci_type == "QRT":
-            mean, lower, upper = self._calc_data_bounds_qrt(data_all, axis, self.q_lower, self.q_upper)
+            return self._calc_data_bounds_abs(data_all, axis)
         elif self.ci_type == "STD":
-            mean, lower, upper = self._calc_data_bounds_std(data_all, axis, self.n_dev)
+            return self._calc_data_bounds_std(data_all, axis, self.n_dev)
         else:
             raise ValueError("ci_type must be ABS or STD: {}".format(self.ci_type))
-        data['mean'] = mean
-        data['lower'] = lower
-        data['upper'] = upper
-        return data
 
-    # Maximum upper and lower bounds.
+    # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
     def _calc_data_bounds_abs(self, data_all, axis):
         lower = np.asarray(data_all).min(0)
         upper = np.asarray(data_all).max(0)
         mean = np.sum(data_all, axis=axis)/self.n_iter
         return mean, lower, upper
 
-    # Quartile bounds.
-    def _calc_data_bounds_qrt(self, data_all, axis, q_lower, q_upper):
-        data_df = pd.DataFrame(data_all)
-        mean = data_df.mean(axis=axis)
-        lower = data_df.quantile(q=q_lower, axis=axis)
-        upper = data_df.quantile(q=q_upper, axis=axis)
-        return mean.values, lower.values, upper.values
-
-    # Standard deviation bounds.
+    # Calculate mean and confidence interval of n * stdev given a matrix where each row is a data array.
     def _calc_data_bounds_std(self, data_all, axis, n_dev):
         data_df = pd.DataFrame(data_all)
         std = data_df.std(axis=axis)
@@ -236,7 +211,6 @@ class MdpDataGatherer():
     # Convert absolute index to tax level.
     def _map_id_to_tax_level(self, idx, tax_levels):
         tax_levels_centered = np.array(tax_levels) - tax_levels[len(tax_levels)//2]
-        # tax_levels_centered = np.array(tax_levels)
         return tax_levels_centered[idx]
 
     # Get single state variable as array.
@@ -310,7 +284,7 @@ class MdpPlotter():
         colors = self._get_colors(colors, len(bar_labels))
         for i in range(len(y_bars)):
             if error is not None:
-                self.ax.bar(x+(i*width), y_bars[i]['mean'], width=width, color=colors[i], label=bar_labels[i])
+                self.ax.bar(x+(i*width), y_bars[i], width=width, color=colors[i], label=bar_labels[i])
             else:
                 self.ax.bar(x+(i*width), y_bars[i], yerr=error, width=width, color=colors[i], ecolor='k', label=bar_labels[i])
         self._set_y_range(self.ax, y_min, y_max)
@@ -330,20 +304,12 @@ class MdpPlotter():
         self.ax.set_yticks(np.arange(y_matrix.shape[0]))
 
     def plot_lines(self, x, y_lines, line_labels, y_min=None, y_max=None,
-                   colors=None, legend_loc='best', CI=False):
+                   colors=None, legend_loc='best', y_lower=None, y_upper=None):
         colors = self._get_colors(colors, len(line_labels))
         for i in range(len(y_lines)):
-            self.ax.plot(x, y_lines[i]['mean'], color=colors[i], label=line_labels[i])
-            if CI:
-                self.ax.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.1)
-        self._set_y_range(self.ax, y_min, y_max)
-        self.ax.legend(loc=legend_loc)
-
-    def plot_scatter(self, x, y_scatter, scatter_labels, y_min=None, y_max=None,
-                     colors=None, legend_loc='best', marker='.'):
-        colors = self._get_colors(colors, len(scatter_labels))
-        for i in range(len(y_scatter)):
-            self.ax.scatter(x, y_scatter[i], color=colors[i], marker=marker, label=scatter_labels[i])
+            self.ax.plot(x, y_lines[i], color=colors[i], label=line_labels[i])
+            if y_upper is not None and y_lower is not None:
+                self.ax.fill_between(x, y_lower[i], y_upper[i], color=colors[i], alpha=0.1)
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
@@ -377,13 +343,13 @@ class MdpPlotter():
             self.ax.scatter(x, y, color=color, label=label)
 
     def add_twin_lines(self, x, y_lines, y_label, line_labels, y_min=None, y_max=None,
-                       colors=None, legend_loc='best', CI=False, y_colors=None):
+                       colors=None, legend_loc='best', y_lower=None, y_upper=None, y_colors=None):
         colors = self._get_colors(colors, len(line_labels))
         self.axT = self.ax.twinx()
         for i in range(len(y_lines)):
-            self.axT.plot(x, y_lines[i]['mean'], color=colors[i], label=line_labels[i])
-            if CI:
-                self.axT.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.1)
+            self.axT.plot(x, y_lines[i], color=colors[i], label=line_labels[i])
+            if y_upper is not None and y_lower is not None:
+                self.axT.fill_between(x, y_lower[i], y_upper[i], color=colors[i], alpha=0.1)
         self.axT.set_ylabel(y_label)
         if y_colors:
             self.ax.yaxis.label.set_color(colors[0])
@@ -403,14 +369,9 @@ class MdpPlotter():
             return [color_map(c) for c in np.arange(n_colors)]
 
     def _set_y_range(self, ax, y_min, y_max):
-        if y_min is not None and y_max is not None:
-            ax.set_ylim(bottom=y_min, top=y_max)
-            return
-        elif y_min is not None and y_max is None:
+        if y_min and y_max is None:
             ax.set_ylim(bottom=y_min)
-            return
-        elif y_min is None and y_max is not None:
+        elif y_min is None and y_max:
             ax.set_ylim(top=y_max)
-            return
-        else:
-            return
+        elif y_min and y_max:
+            ax.set_ylim(bottom=y_min, top=y_max)
