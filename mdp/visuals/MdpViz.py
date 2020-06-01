@@ -54,7 +54,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_component = [mdp_fh.mdp_cost.calc_partial_cost(state, a, component) for state, a in policy]
             y_all.append(y_component)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     # Get total cost averaged across stochastic tech stage.
     def cost_total(self, mdp_fh):
@@ -63,7 +63,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_total = [mdp_fh.mdp_cost.calc_total_cost(state, a) for state, a in policy]
             y_all.append(y_total)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     ## CO2
 
@@ -74,7 +74,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_price(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     def co2_emissions(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -83,7 +83,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_emit(f) for f in y_ff]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     def co2_tax_collected(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -92,7 +92,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_tax(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     def target_emissions(self, mdp_fh):
         emit_steps = []
@@ -111,7 +111,7 @@ class MdpDataGatherer():
             y_variables = self._policy_extract_state_variable('r', policy, tax_levels)
             y_variables = np.asarray(y_variables) / mdp_fh.n_plants
             y_all.append(y_variables)
-        return self._calc_data_bounds(y_all)
+        return self.calc_data_bounds(y_all)
 
     ## STATE
 
@@ -161,7 +161,7 @@ class MdpDataGatherer():
         return policy_annotated
 
     # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
-    def _calc_data_bounds(self, data_all, axis=0):
+    def calc_data_bounds(self, data_all, axis=0):
         data = dict()
         if self.ci_type == "ABS":
             mean, lower, upper = self._calc_data_bounds_abs(data_all, axis)

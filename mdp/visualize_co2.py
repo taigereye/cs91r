@@ -9,7 +9,7 @@ from mdp.analysis.MdpCLI import MdpArgs
 from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
 
 
-ERR_MSG = "error: visualize_co2 only supported for MDP V4 or higher."
+ERR_MSG = "visualize_co2 only supported for MDP V4 or higher."
 
 
 def main(argv):
@@ -22,7 +22,7 @@ def main(argv):
     parser.add_save()
     args = parser.get_args()
 
-    if not parser.check_version(2, 4, ERR_MSG):
+    if not parser.check_version(4, 4, ERR_MSG):
         sys.exit(1)
 
     if not parser.check_paramfile_multiple(ERR_MSG):

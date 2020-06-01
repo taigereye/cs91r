@@ -2,6 +2,7 @@ import argparse
 
 from pathlib import Path
 
+from mdp.models.MdpV3 import MdpModelV3
 from mdp.models.MdpV4 import MdpModelV4
 
 
@@ -12,6 +13,9 @@ class MdpArgs():
 
     def add_confidence_interval(self):
         self.parser.add_argument("--CI", help="plot confidence intervals for single line plots", action='store_true')
+
+    def add_cycle_length(self):
+        self.parser.add_argument("-y", "--cycle", help="list of length of tax adjustment cycle", nargs='+', type=int)
 
     def add_granular(self):
         self.parser.add_argument("--granular", help="plot more granular cost component breakdown", action='store_true')
@@ -73,7 +77,9 @@ def get_emissions_target(version, targetsfile):
 
 def get_mdp_model(version, params_all):
     mdp_model = None
-    if int(version) == 4:
+    if int(version) == 3:
+        mdp_model = MdpModelV3()
+    elif int(version) == 4:
         mdp_model = MdpModelV4()
     assert(mdp_model is not None)
     for params in params_all:

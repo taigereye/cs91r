@@ -1,6 +1,6 @@
 import numpy as np
 
-import mdp.visuals.mdp_plot as mplt
+import mdp.analysis.mdp_plot as mplt
 
 
 # COSTS
@@ -350,7 +350,10 @@ def co2_emit_tax_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, 
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
-    runs, y_r, y_emit, y_tax = avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary=p_adv_vary)
+    _, y_r, y_emit, y_tax = avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary=p_adv_vary)
+    y_r = np.sum(y_r, axis=0)/n_iter
+    y_emit = np.sum(y_emit, axis=0)/n_iter
+    y_tax = np.sum(y_tax, axis=0)/n_iter
     y_label_r = "Number of Total RES Plants"
     if is_annual:
         y_emit, scale_str = scale_y_dollar_data(y_emit)
@@ -380,11 +383,8 @@ def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
     for iteration in runs:
         policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
     y_r = [extract_idx_annotated_policy(policy[t0:tN], 'r') for policy in policy_all]
-    y_r = np.sum(y_r, axis=0)/n_iter
     y_emit = [calc_co2_emit_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
-    y_emit = np.sum(y_emit, axis=0)/n_iter
     y_tax = [calc_co2_tax_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
-    y_tax = np.sum(y_tax, axis=0)/n_iter
     runs = np.sum(runs, axis=0)[t0:tN]/n_iter
     return runs, y_r, y_emit, y_tax
 

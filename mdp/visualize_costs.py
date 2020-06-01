@@ -25,7 +25,7 @@ COMPONENTS_GRANULAR = ["co2_tax",
                        "phs_cap",
                        "phs_om"]
 
-ERR_MSG = "error: visualize_costs supported for MDP V4 only."
+ERR_MSG = "visualize_costs supported for MDP V4 only."
 
 
 def main(argv):
@@ -39,7 +39,7 @@ def main(argv):
     parser.add_save()
     args = parser.get_args()
 
-    if not parser.check_version(2, 4, ERR_MSG):
+    if not parser.check_version(4, 4, ERR_MSG):
         sys.exit(1)
 
     if not parser.check_paramfile_multiple(ERR_MSG):
