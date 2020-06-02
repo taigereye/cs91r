@@ -1,6 +1,8 @@
+cs91r==1.0
 cycler==0.10.0
 kiwisolver==1.2.0
 matplotlib==3.2.1
+-e git+https://github.com/taigereye/cs91r.git@57acb8600701b04e2fb64e6b28889e160e0e7029#egg=mdp
 numpy==1.18.2
 pandas==1.0.3
 pathlib==1.0.1
