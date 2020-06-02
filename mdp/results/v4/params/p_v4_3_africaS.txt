@@ -1,9 +1,9 @@
 {
 'n_years': 50,
-'n_tech_stages': 4,
-'n_plants': 25,
-'n_tax_levels': 5,
-'ff_size': 240000,
+'n_tech_stages': 3,
+'n_plants': 15,
+'n_tax_levels': 3,
+'ff_size': 40000,
 'ff_capacity': 0.60,
 'ff_lifetime': 32,
 'res_capacity': 0.30,
@@ -27,7 +27,7 @@
 'c_bss_var': 1.75,
 'c_phs_cap': 170,
 'c_phs_fix': 15,
-'p_adv_tech': [0.12, 0.11, 0.05, 0],
+'p_adv_tech': [0.12, 0.11, 0],
 'disc_rate': 0.04,
 'emit_targets': "3_africaS_mean",
 'target_delta': 100000
