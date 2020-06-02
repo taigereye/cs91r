@@ -3,8 +3,8 @@ import argparse
 from collections import OrderedDict
 from pathlib import Path
 
-from mdp.models.MdpV3 import MdpModelV3
-from mdp.models.MdpV4 import MdpModelV4
+from models.MdpV3 import MdpModelV3
+from models.MdpV4 import MdpModelV4
 
 
 class MdpArgs():

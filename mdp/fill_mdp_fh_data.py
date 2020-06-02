@@ -3,9 +3,9 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 
-import mdp.analysis.MdpCLI as cl
-from mdp.analysis.MdpCLI import MdpArgs
-from mdp.visuals.MdpViz import MdpDataGatherer
+import analysis.MdpCLI as cl
+from analysis.MdpCLI import MdpArgs
+from visuals.MdpViz import MdpDataGatherer
 
 
 MDP_VERSION = 4
