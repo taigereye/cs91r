@@ -48,7 +48,7 @@ def main(argv):
 
     params = cl.get_params_single(MDP_VERSION, args.paramsfile)
     mdp_model = cl.get_mdp_model(MDP_VERSION, [params])
-    mdp_fh = cl.get_mdp_instance_single(mdp_model, params_all)
+    mdp_fh = cl.get_mdp_instance_single(mdp_model, params)
 
     if args.granular:
         components = COMPONENTS_GRANULAR
@@ -91,6 +91,10 @@ def main(argv):
     with open(df, 'w+') as datafile:
         datafile.write(str(data))
     datafile.close()
+
+    print("MDP data stored:\n")
+    for k in data.keys():
+        print("{}".format(k))
 
 
 if __name__ == "__main__":
