@@ -1,8 +1,8 @@
 from collections import OrderedDict
 import itertools as it
-import math
 import numpy as np
 import mdptoolbox as mtb
+from pathlib import Path
 from scipy.sparse import csr_matrix
 
 
@@ -80,7 +80,7 @@ class MdpFiniteHorizonV4():
         self.co2_tax_cycle = params['co2_tax_cycle']
         self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
-        self.emit_targets = params['emit_targets']
+        self.emit_targets = self.mdp_cost.read_targetsfile(params['emit_targets'])
         self.target_delta = params['target_delta']
         # Constants
         self.scale_down = 9
@@ -369,7 +369,7 @@ class MdpCostCalculatorV4():
         self.co2_tax_type = params['co2_tax_type']
         self.co2_tax_adjust = params['co2_tax_adjust']
         self.co2_tax_cycle = params['co2_tax_cycle']
-        self.emit_targets = params['emit_targets']
+        self.emit_targets = self.read_targetsfile(params['emit_targets'])
         self.target_delta = params['target_delta']
         # FF plants
         self.ff_size = params['ff_size']
@@ -440,6 +440,7 @@ class MdpCostCalculatorV4():
             cost = self._storage_om(r, a)
         return cost
 
+    # Calculate total cost for a given state.
     def calc_total_cost(self, state, a):
         (t, v, r, l, e) = state
         if a + r > self.n_plants:
@@ -576,3 +577,13 @@ class MdpCostCalculatorV4():
 
     def _storage_total(self, v, r, a):
         return self._bss_total(v, r, a) + self._phs_total(v, r, a)
+
+    ## HELPER FUNCTIONS
+
+    def read_targetsfile(self, targetsfile):
+        targets_dir = Path("visuals/v4/targets")
+        tf = targets_dir / "e_v4_{}.txt".format(targetsfile)
+        with open(tf, 'r') as targetsfile:
+            emit_targets = eval(targetsfile.read())
+        targetsfile.close()
+        return emit_targets

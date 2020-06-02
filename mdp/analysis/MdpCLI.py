@@ -1,5 +1,6 @@
 import argparse
 
+from collections import OrderedDict
 from pathlib import Path
 
 from mdp.models.MdpV3 import MdpModelV3
@@ -41,14 +42,17 @@ class MdpArgs():
     def add_time_range(self):
         self.parser.add_argument("-t", "--timerange", help="plot only subset of model time horizon", nargs=2, type=int, default=None)
 
-    def check_version(self, v_min, v_max, err_msg):
-        if int(self.args.version) < v_min or int(self.args.version) > v_max:
-            print("error: {}.".format(err_msg))
+    def add_use_data(self):
+        self.parser.add_argument("--usedata", help="use MDP data stored as dict in txt file", action='store_true')
+
+    def check_paramfile_multiple(self):
+        if len(self.args.paramsfiles) == 0:
+            print("error: must pass in at least one paramsfile.")
             return False
         return True
 
-    def check_paramfile_multiple(self, err_msg):
-        if len(self.args.paramsfiles) == 0:
+    def check_version(self, v_min, v_max, err_msg):
+        if int(self.args.version) < v_min or int(self.args.version) > v_max:
             print("error: {}.".format(err_msg))
             return False
         return True
@@ -87,6 +91,15 @@ def get_mdp_model(version, params_all):
     return mdp_model
 
 
+def get_mdp_data(version, datafile):
+    data_dir = Path("results/v{}/data".format(version))
+    df = data_dir / "d_v{}_{}.txt".format(version, datafile)
+    with open(df, 'r') as datafile:
+        data = eval(datafile.read())
+    datafile.close()
+    return data
+
+
 def get_mdp_instance_multiple(mdp_model, params_all):
     mdp_fh_all = []
     for params in params_all:
@@ -120,14 +133,14 @@ def get_params_multiple(version, paramsfiles):
     return params_all
 
 
-def get_time_range(args, mdp_fh):
+def get_time_range(args, params):
     if args.timerange:
         t0, tN = args.timerange
         t0 = max(0, t0-1)
-        if tN - t0 > mdp_fh.n_years:
-            print("error: time range {}-{} out of range: {}".format(t0, tN, mdp_fh.n_tech_stages))
+        if tN - t0 > params['n_years']:
+            print("error: time range {}-{} out of range: {}".format(t0, tN, params['n_years']))
             return None
     else:
         t0 = 0
-        tN = mdp_fh.n_years
+        tN = params['n_years']
     return [t0, tN]

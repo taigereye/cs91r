@@ -122,8 +122,7 @@ class MdpDataGatherer():
             tax_levels = self.get_tax_levels(mdp_fh)
             y_variables = self._policy_extract_state_variable(var_code, policy, tax_levels)
             y_all.append(y_variables)
-        y_mean = np.sum(y_all, axis=0)/self.n_iter
-        return y_mean
+        return self.calc_data_bounds(y_all)
 
     ## HELPER FUNCTIONS
 
@@ -347,14 +346,16 @@ class MdpPlotter():
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
-    def plot_stacked_bar(self, x, y_bars, bar_labels, y_min=None, y_max=None,
+    def plot_stacked_bar(self, x, y_bars_all, bar_labels, y_min=None, y_max=None,
                          colors=None, legend_loc='best', width=0.25):
         colors = self._get_colors(colors, len(bar_labels))
-        self.ax.bar(x, y_bars[0], width=width, label=bar_labels[0], color=colors[0], edgecolor='w')
-        for i in np.arange(1, len(y_bars)):
-            y = y_bars[i]
-            bottom = np.sum(y_bars[0:i], axis=0)
-            self.ax.bar(x, y, width=width, bottom=bottom, label=bar_labels[i], color=colors[i], edgecolor='w')
+        for i in range(len(y_bars_all)):
+            y_bars = y_bars_all[i]
+            self.ax.bar(x+i*width, y_bars[0], width=width, label=bar_labels[0], color=colors[0], alpha=1.0-i*0.4, edgecolor='w')
+            for j in np.arange(1, len(y_bars)):
+                y = y_bars[j]
+                bottom = np.sum(y_bars[0:j], axis=0)
+                self.ax.bar(x+i*width, y, width=width, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*0.4, edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 

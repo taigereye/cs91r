@@ -29,6 +29,6 @@
 'c_phs_fix': 15,
 'p_adv_tech': [0.12, 0.11, 0],
 'disc_rate': 0.04,
-'emit_targets': [49e6, 46.3e6, 43.5e6, 40.8e6, 38e6, 35.3e6, 32.5e6, 29.8e6, 27.05e6, 24.3e6],
+'emit_targets': "5_dec_half",
 'target_delta': 100000
 }
