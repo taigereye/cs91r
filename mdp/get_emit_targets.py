@@ -36,7 +36,7 @@ def main(argv):
     for y in args.cycle:
         targets = []
         # Extract mean CO2 emissions level at intervals of cycle length.
-        for i in range(mdp_fh.n_years//y):
+        for i in range(round(mdp_fh.n_years/y)):
             targets.append(y_emit[i])
             i += y
         targets_dir = Path("visuals/v{}/targets".format(DIR_VERSION))
