@@ -302,7 +302,7 @@ class MdpFiniteHorizonV4():
 
     # Iterate over state space.
     def _get_iter_states(self):
-        return it.product(np.arange(self.n_years+1),
+        return it.product(np.arange(self.n_years),
                           np.arange(self.n_tech_stages),
                           np.arange(self.n_plants+1),
                           np.arange(self.n_tax_levels),

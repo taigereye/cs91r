@@ -8,7 +8,7 @@
 'ff_lifetime': 32,
 'res_capacity': 0.30,
 'res_lifetime': 25,
-'c_co2_base_levels': [14.18, 18.90, 23.63, 28.36, 33.08],
+'c_co2_base_levels': [18.90, 23.63, 28.36],
 'c_co2_inc_levels': [1, 3, 5, 7, 9],
 'co2_tax_type': "EXP",
 'co2_tax_adjust': "BASE",
