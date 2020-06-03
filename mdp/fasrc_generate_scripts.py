@@ -21,7 +21,7 @@ def main(argv):
 
     for paramsfile in params_list:
         script_dir = Path("fasrc/scripts")
-        sf = script_dir / "run_{}.txt".format(paramsfile)
+        sf = script_dir / "run_{}.sh".format(paramsfile)
         with open(sf, 'w+') as scriptfile:
 
             scriptfile.write('''\
