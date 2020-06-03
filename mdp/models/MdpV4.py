@@ -302,10 +302,13 @@ class MdpFiniteHorizonV4():
 
     # Iterate over state space.
     def _get_iter_states(self):
-        return it.product(np.arange(self.n_years),
+        idx_default = self.n_total_levels//2
+        l_lowest = (idx_default - (self.n_tax_levels-1)//2)
+        l_highest = idx_default + (self.n_tax_levels-1)//2
+        return it.product(np.arange(self.n_years+1),
                           np.arange(self.n_tech_stages),
                           np.arange(self.n_plants+1),
-                          np.arange(self.n_tax_levels),
+                          np.arange(l_lowest, l_highest+1),
                           np.arange(self.n_adjustments))
 
     # Normalize a row in a SxS transition probabilities matrix.
