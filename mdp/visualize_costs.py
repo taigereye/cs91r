@@ -1,7 +1,6 @@
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
@@ -9,30 +8,13 @@ from mdp.analysis.MdpCLI import MdpArgs
 from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
 
 
-COMPONENTS = ["co2_tax",
-              "ff_total",
-              "res_total",
-              "bss_total",
-              "phs_total"]
-
-COMPONENTS_GRANULAR = ["co2_tax",
-                       "ff_replace",
-                       "ff_om",
-                       "res_cap",
-                       "res_replace",
-                       "bss_cap",
-                       "bss_om",
-                       "phs_cap",
-                       "phs_om"]
-
-
 def main(argv):
     parser = MdpArgs(description="plot costs of following MDP instance optimal policy")
     parser.add_model_version()
-    parser.add_paramfile_multiple()
-    parser.add_use_data()
+    parser.add_paramsfile_multiple()
     parser.add_time_range()
     parser.add_iterations()
+    parser.add_use_data()
     parser.add_confidence_interval()
     parser.add_granular()
     parser.add_save()
@@ -52,44 +34,45 @@ def main(argv):
         sys.exit(3)
 
     if args.granular:
-        components = COMPONENTS_GRANULAR
+        components = cl.COMPONENTS_GRANULAR
     else:
-        components = COMPONENTS
+        components = cl.COMPONENTS
 
-    np.set_printoptions(linewidth=300)
-    visuals_dir = Path("visuals/v{}/plots".format(args.version))
-
-    mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range, ci_type="QRT")
-
-    if args.usedata:
-        y_total, y_breakdown, y_percents = ([] for i in range(3))
-        for paramfile in args.paramsfiles:
-            data = cl.get_mdp_data(args.version, paramfile)
-            y_total.append(data['cost_total'])
-            y_breakdown.append(data['cost_breakdown'])
-            y_percents.append(data['cost_percent'])
-    else:
-        mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
-        y_total = [mdp_data.cost_total(mdp_fh) for mdp_fh in mdp_fh_all]
-        y_breakdown = [mdp_data.cost_breakdown_components(mdp_fh, components) for mdp_fh in mdp_fh_all]
-        y_percents = [mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True) for mdp_fh in mdp_fh_all]
+    mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range)
+    if args.confidenceinterval:
+        mdp_data.set_ci(ci_type=args.confidenceinterval)
 
     x = mdp_data.get_time_range(t_range)
+
+    y_total, y_breakdown, y_percents = ([] for i in range(3))
+    if args.usedata:
+        for paramfile in args.paramsfiles:
+            data = cl.get_mdp_data(args.version, paramfile)
+            y_total.append(mdp_data.get_data_component(data, 'cost_total'))
+            y_breakdown.append(mdp_data.get_data_component(data, 'cost_breakdown'))
+            y_percents.append(mdp_data.get_data_component(data, 'cost_percent'))
+    else:
+        mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
+        for mdp_fh in mdp_fh_all:
+            y_total.append(mdp_data.calc_data_bounds(mdp_data.cost_total(mdp_fh)))
+            y_breakdown.append(mdp_data.cost_breakdown_components(mdp_fh, components))
+            y_percents.append(mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True))
 
     mdp_plot = MdpPlotter()
     # Total cost
     mdp_plot.initialize("Total Annual Cost", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_lines(x, y_total, args.paramsfiles, CI=args.CI)
+    mdp_plot.plot_lines(x, y_total, args.paramsfiles, CI=args.confidenceinterval)
     fig_total = mdp_plot.finalize()
     # Absolute cost breakdown
     mdp_plot.initialize("Absolute Cost Breakdown", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_stacked_bar(x, y_breakdown, components)
+    mdp_plot.plot_stacked_bars(x, y_breakdown, components)
     fig_breakdown = mdp_plot.finalize()
     # Percentage cost breakdown
     mdp_plot.initialize("Percentage Cost Breakdown", "Time (years)", "Cost (%/yr)")
-    mdp_plot.plot_stacked_bar(x, y_percents, components)
+    mdp_plot.plot_stacked_bars(x, y_percents, components)
     fig_percents = mdp_plot.finalize()
 
+    visuals_dir = Path("visuals/v{}/plots".format(args.version))
     if args.save:
         fig_total.savefig(visuals_dir / "g_v{}_total.png".format(args.version))
         fig_breakdown.savefig(visuals_dir / "g_v{}_breakdown.png".format(args.version))

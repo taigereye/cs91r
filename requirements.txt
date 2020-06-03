@@ -1,8 +1,9 @@
 cs91r==1.0
 cycler==0.10.0
+joblib==0.15.1
 kiwisolver==1.2.0
 matplotlib==3.2.1
--e git+https://github.com/taigereye/cs91r.git@57acb8600701b04e2fb64e6b28889e160e0e7029#egg=mdp
+-e git+https://github.com/taigereye/cs91r.git@41c6dd7339b7c5802e75478714411f3f30a0ed84#egg=mdp
 numpy==1.18.2
 pandas==1.0.3
 pathlib==1.0.1
@@ -10,5 +11,7 @@ pymdptoolbox==4.0b3
 pyparsing==2.4.7
 python-dateutil==2.8.1
 pytz==2019.3
+scikit-learn==0.23.1
 scipy==1.4.1
 six==1.14.0
+threadpoolctl==2.1.0

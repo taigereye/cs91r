@@ -1,8 +1,8 @@
 {
 'n_years': 50,
 'n_tech_stages': 3,
-'n_plants': 10,
-'ff_size': 600000,
+'n_plants': 15,
+'ff_size': 400000,
 'ff_capacity': 0.60,
 'ff_lifetime': 32,
 'res_capacity': 0.30,

@@ -5,17 +5,13 @@ import pandas as pd
 
 
 class MdpDataGatherer():
-    def __init__(self, mdp_model, n_iter, t_range, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
+    def __init__(self, mdp_model, n_iter, t_range):
         self.mdp_model = mdp_model
         self.instances = OrderedDict()
         self.n_iter = n_iter
         self.t0 = t_range[0]
         self.tN = t_range[1]
         self.start_year = 2020
-        self.ci_type = ci_type
-        self.n_dev = n_dev
-        self.q_lower = q_lower
-        self.q_upper = q_upper
 
     def add_mdp_instance(self, paramsfile, params):
         assert(self.mdp_model.param_names == list(params.keys()))
@@ -23,7 +19,14 @@ class MdpDataGatherer():
         self.instances[paramsfile] = mdp_fh
         return mdp_fh
 
-    def set_ci_type(self, ci_type, n_dev=1, q_lower=0.25, q_upper=0.75):
+    def get_data_component(self, data, key, mean_only=False):
+        y_all = data[key]
+        if mean_only:
+            return self.calc_data_bounds(y_all)['mean']
+        else:
+            return self.calc_data_bounds(y_all)
+
+    def set_ci(self, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
         self.ci_type = ci_type
         self.n_dev = n_dev
         self.q_lower = q_lower
@@ -42,10 +45,10 @@ class MdpDataGatherer():
                 y_components.append(y)
             y_components = np.stack(np.asarray(y_components), axis=0)
             y_all.append(y_components)
-        y_mean = np.sum(y_all, axis=0)/self.n_iter
+        y_mean = np.sum(y_all, axis=0) / self.n_iter
         if is_percent:
-            y_mean = y_mean / np.sum(y_mean, axis=0)
-        return y_mean
+            y_mean = np.true_divide(np.asarray(y_mean), np.asarray(y_mean).sum(axis=1, keepdims=True))
+        return np.asarray(y_mean)
 
     # Get single cost component averaged across stochastic tech stage.
     def cost_single_component(self, mdp_fh, component):
@@ -54,7 +57,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_component = [mdp_fh.mdp_cost.calc_partial_cost(state, a, component) for state, a in policy]
             y_all.append(y_component)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     # Get total cost averaged across stochastic tech stage.
     def cost_total(self, mdp_fh):
@@ -63,7 +66,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_total = [mdp_fh.mdp_cost.calc_total_cost(state, a) for state, a in policy]
             y_all.append(y_total)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     ## CO2
 
@@ -74,7 +77,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_price(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     def co2_emissions(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -83,7 +86,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_emit(f) for f in y_ff]
             y_all.append(y_price)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     def co2_tax_collected(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -92,7 +95,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_tax(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     def target_emissions(self, mdp_fh):
         emit_steps = []
@@ -111,7 +114,7 @@ class MdpDataGatherer():
             y_variables = self._policy_extract_state_variable('r', policy, tax_levels)
             y_variables = np.asarray(y_variables) / mdp_fh.n_plants
             y_all.append(y_variables)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     ## STATE
 
@@ -122,7 +125,7 @@ class MdpDataGatherer():
             tax_levels = self.get_tax_levels(mdp_fh)
             y_variables = self._policy_extract_state_variable(var_code, policy, tax_levels)
             y_all.append(y_variables)
-        return self.calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     ## HELPER FUNCTIONS
 
@@ -160,8 +163,9 @@ class MdpDataGatherer():
         return policy_annotated
 
     # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
-    def calc_data_bounds(self, data_all, axis=0):
+    def calc_data_bounds(self, data_all, axis=0, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
         data = dict()
+        self.set_ci(ci_type, n_dev, q_lower, q_upper)
         if self.ci_type == "ABS":
             mean, lower, upper = self._calc_data_bounds_abs(data_all, axis)
         elif self.ci_type == "QRT":
@@ -169,7 +173,7 @@ class MdpDataGatherer():
         elif self.ci_type == "STD":
             mean, lower, upper = self._calc_data_bounds_std(data_all, axis, self.n_dev)
         else:
-            raise ValueError("ci_type must be ABS or STD: {}".format(self.ci_type))
+            raise ValueError("ci_type must be ABS, QRT, or STD: {}".format(self.ci_type))
         data['mean'] = mean
         data['lower'] = lower
         data['upper'] = upper
@@ -307,11 +311,13 @@ class MdpPlotter():
     def plot_bars(self, x, y_bars, bar_labels, y_min=None, y_max=None,
                   colors=None, legend_loc='best', width=0.20, error=None):
         colors = self._get_colors(colors, len(bar_labels))
+        w = min(width, 1.0/len(y_bars))
         for i in range(len(y_bars)):
             if error is not None:
-                self.ax.bar(x+(i*width), y_bars[i]['mean'], width=width, color=colors[i], label=bar_labels[i])
+                self.ax.bar(x+(i*w), y_bars[i]['mean'], width=w, color=colors[i], label=bar_labels[i])
             else:
-                self.ax.bar(x+(i*width), y_bars[i], yerr=error, width=width, color=colors[i], ecolor='k', label=bar_labels[i])
+                self.ax.bar(x+(i*w), y_bars[i], yerr=error, width=w, color=colors[i], ecolor='k', label=bar_labels[i])
+        self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
@@ -346,18 +352,21 @@ class MdpPlotter():
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
-    def plot_stacked_bar(self, x, y_bars_all, bar_labels, y_min=None, y_max=None,
-                         colors=None, legend_loc='best', width=0.25):
+    def plot_stacked_bars(self, x, y_bars_all, bar_labels, y_min=None, y_max=None,
+                          colors=None, legend_loc='best', width=0.25):
         colors = self._get_colors(colors, len(bar_labels))
+        a = 1.0 / len(y_bars_all)
+        w = min(width, 1.0/len(y_bars_all))
         for i in range(len(y_bars_all)):
             y_bars = y_bars_all[i]
-            self.ax.bar(x+i*width, y_bars[0], width=width, label=bar_labels[0], color=colors[0], alpha=1.0-i*0.4, edgecolor='w')
+            self.ax.bar(x+i*w, y_bars[0], width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
             for j in np.arange(1, len(y_bars)):
                 y = y_bars[j]
                 bottom = np.sum(y_bars[0:j], axis=0)
-                self.ax.bar(x+i*width, y, width=width, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*0.4, edgecolor='w')
+                self.ax.bar(x+i*w, y, width=w, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*a, edgecolor='w')
+        self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)
-        self.ax.legend(loc=legend_loc)
+        self.ax.legend(loc=legend_loc, labels=bar_labels)
 
     ## ADD ONS
 

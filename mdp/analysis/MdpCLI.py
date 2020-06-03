@@ -1,10 +1,26 @@
 import argparse
 
-from collections import OrderedDict
 from pathlib import Path
 
 from models.MdpV3 import MdpModelV3
 from models.MdpV4 import MdpModelV4
+
+
+COMPONENTS = ["co2_tax",
+              "ff_total",
+              "res_total",
+              "bss_total",
+              "phs_total"]
+
+COMPONENTS_GRANULAR = ["co2_tax",
+                       "ff_replace",
+                       "ff_om",
+                       "res_cap",
+                       "res_replace",
+                       "bss_cap",
+                       "bss_om",
+                       "phs_cap",
+                       "phs_om"]
 
 
 class MdpArgs():
@@ -13,7 +29,7 @@ class MdpArgs():
         self.args = None
 
     def add_confidence_interval(self):
-        self.parser.add_argument("--CI", help="plot confidence intervals for single line plots", action='store_true')
+        self.parser.add_argument("-ci", "--confidenceinterval", help="add confidence intervals for single line plots", default=None)
 
     def add_cycle_length(self):
         self.parser.add_argument("-y", "--cycle", help="list of length of tax adjustment cycle", nargs='+', type=int)
@@ -21,29 +37,38 @@ class MdpArgs():
     def add_granular(self):
         self.parser.add_argument("--granular", help="plot more granular cost component breakdown", action='store_true')
 
-    def add_emissions_target(self):
+    def add_targetsfile(self):
         self.parser.add_argument("-e", "--targetsfile", help="txt file with CO2 emissions targets as list")
 
-    def add_iterations(self):
-        self.parser.add_argument("-i", "--iterations", help="number of times MDP run with stochastic tech stage", type=int, default=200)
+    def add_iterations(self, default=200):
+        self.parser.add_argument("-i", "--iterations", help="number of times MDP run with stochastic tech stage", type=int, default=default)
 
     def add_model_version(self):
         self.parser.add_argument("-m", "--version", help="MDP model version", type=int)
 
-    def add_paramfile_multiple(self):
+    def add_paramsfile_multiple(self):
         self.parser.add_argument("-p", "--paramsfiles", help="list of txt files with version specific params as dict", nargs='*', action='store')
 
-    def add_paramfile_single(self):
+    def add_paramsfile_single(self):
         self.parser.add_argument("-p", "--paramsfile", help="txt file with version specific params as dict")
 
     def add_save(self):
         self.parser.add_argument("--save", help="save plots as png files", action='store_true')
 
-    def add_time_range(self):
-        self.parser.add_argument("-t", "--timerange", help="plot only subset of model time horizon", nargs=2, type=int, default=None)
+    def add_time_range(self, default=None):
+        self.parser.add_argument("-t", "--timerange", help="plot only subset of model time horizon", nargs=2, type=int, default=default)
 
     def add_use_data(self):
         self.parser.add_argument("--usedata", help="use MDP data stored as dict in txt file", action='store_true')
+
+    def check_confidence_interval(self):
+        if not self.args.confidenceinterval:
+            print("error: must pass in CI.")
+            return False
+        elif self.args.confidenceinterval not in set("ABS", "QRT", "STD"):
+            print("error: CI must be ABS, QRT, or STD: {}".format(self.args.confidenceinterval))
+            return False
+        return True
 
     def check_paramfile_multiple(self):
         if len(self.args.paramsfiles) == 0:

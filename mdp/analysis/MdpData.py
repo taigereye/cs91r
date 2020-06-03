@@ -1,6 +1,6 @@
 import numpy as np
 
-import mdp.analysis.mdp_plot as mplt
+import mdp.analysis.MdpPlot as mplt
 
 
 # COSTS

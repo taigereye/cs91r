@@ -28,16 +28,9 @@ COMPONENTS_GRANULAR = ["co2_tax",
                        "phs_om"]
 
 
-def data_dict_array_to_list(data):
-    data['mean'] = data['mean'].tolist()
-    data['lower'] = data['lower'].tolist()
-    data['upper'] = data['upper'].tolist()
-    return data
-
-
 def main(argv):
     parser = MdpArgs(description="run MDP instances and collect stochastic data")
-    parser.add_paramfile_single()
+    parser.add_paramsfile_single()
     parser.add_iterations()
     parser.add_granular()
     args = parser.get_args()
@@ -56,7 +49,7 @@ def main(argv):
         components = COMPONENTS
 
     t_range = [0, mdp_fh.n_years]
-    mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range, ci_type="QRT")
+    mdp_data = MdpDataGatherer(mdp_model, args.iterations, t_range)
     # State variables
     y_v = mdp_data.get_state_variable(mdp_fh, 'v')
     y_r = mdp_data.get_state_variable(mdp_fh, 'r')
@@ -74,17 +67,17 @@ def main(argv):
     y_percents = mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True)
     # Store data to be used by visualize commands.
     data = OrderedDict()
-    data['tech_stage'] = data_dict_array_to_list(y_v)
-    data['res_plants'] = data_dict_array_to_list(y_r)
-    data['res_penetration'] = data_dict_array_to_list(y_res)
-    data['tax_level'] = data_dict_array_to_list(y_l)
-    data['tax_adjustment'] = data_dict_array_to_list(y_e)
-    data['co2_price'] = data_dict_array_to_list(y_price)
-    data['co2_tax'] = data_dict_array_to_list(y_tax)
-    data['co2_emissions'] = data_dict_array_to_list(y_emit)
-    data['cost_total'] = data_dict_array_to_list(y_total)
-    data['cost_breakdown'] = y_breakdown.tolist()
-    data['cost_percent'] = y_percents.tolist()
+    data['tech_stage'] = y_v
+    data['res_plants'] = y_r
+    data['res_penetration'] = y_res
+    data['tax_level'] = y_l
+    data['tax_adjustment'] = y_e
+    data['co2_price'] = y_price
+    data['co2_tax'] = y_tax
+    data['co2_emissions'] = y_emit
+    data['cost_total'] = y_total
+    data['cost_breakdown'] = y_breakdown
+    data['cost_percent'] = y_percents
     # One data file per params file.
     data_dir = Path("results/v{}/data".format(DIR_VERSION))
     df = data_dir / "d_v{}_{}.txt".format(DIR_VERSION, args.paramsfile)

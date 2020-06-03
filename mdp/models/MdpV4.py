@@ -77,6 +77,7 @@ class MdpFiniteHorizonV4():
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
         self.n_tax_levels = params['n_tax_levels']
+        self.n_total_levels = len(params['c_co2_base_levels'])
         self.co2_tax_cycle = params['co2_tax_cycle']
         self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
@@ -344,13 +345,15 @@ class MdpFiniteHorizonV4():
         (t, v, r, l, e) = state
         l_updated = l
         e_updated = e
+        idx_default = self.n_total_levels//2
         if t > 5 and t % self.co2_tax_cycle == 0:
             if e == 0:
                 l_updated = l
             elif e == 1:
-                l_updated = max(0, l-1)
+                l_updated = max(l-1, idx_default-self.n_tax_levels//2)
             elif e == 2:
-                l_updated = min(self.n_tax_levels-1, l+1)
+
+                l_updated = min(l+1, idx_default+self.n_tax_levels//2)
             e_updated = self.calc_next_adjustment(t, r)
         return l_updated, e_updated
 
@@ -361,11 +364,12 @@ class MdpCostCalculatorV4():
         # General
         self.n_plants = params['n_plants']
         self.n_tax_levels = params['n_tax_levels']
+        self.n_total_levels = len(params['c_co2_base_levels'])
         # CO2 tax
         self.c_co2_base_levels = params['c_co2_base_levels']
-        self.c_co2_base = self.c_co2_base_levels[self.n_tax_levels//2]
+        self.c_co2_base = self.c_co2_base_levels[self.n_total_levels//2]
         self.c_co2_inc_levels = params['c_co2_inc_levels']
-        self.c_co2_inc = self.c_co2_inc_levels[self.n_tax_levels//2]
+        self.c_co2_inc = self.c_co2_inc_levels[self.n_total_levels//2]
         self.co2_tax_type = params['co2_tax_type']
         self.co2_tax_adjust = params['co2_tax_adjust']
         self.co2_tax_cycle = params['co2_tax_cycle']
@@ -479,7 +483,7 @@ class MdpCostCalculatorV4():
         return c_co2_base * ((1+c_co2_inc/100)**t)
 
     def _adjust_co2_tax(self, l):
-        idx_default = len(self.c_co2_base_levels)//2
+        idx_default = self.n_total_levels//2
         # Default CO2 tax is always middle level.
         c_co2_base = self.c_co2_base_levels[idx_default]
         c_co2_inc = self.c_co2_inc_levels[idx_default]
