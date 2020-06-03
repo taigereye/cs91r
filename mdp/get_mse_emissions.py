@@ -1,5 +1,6 @@
 import sys
 
+from collections import OrderedDict
 from sklearn.metrics import mean_squared_error
 
 import mdp.analysis.MdpCLI as cl

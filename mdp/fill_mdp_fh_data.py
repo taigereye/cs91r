@@ -1,6 +1,7 @@
 import sys
 
 from collections import OrderedDict
+import numpy as np
 from pathlib import Path
 
 import analysis.MdpCLI as cl
@@ -64,7 +65,7 @@ def main(argv):
     # Cost related
     y_total = mdp_data.cost_total(mdp_fh)
     y_breakdown = mdp_data.cost_breakdown_components(mdp_fh, components)
-    y_percents = mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True)
+    y_percent = mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True)
     # Store data to be used by visualize commands.
     data = OrderedDict()
     data['tech_stage'] = y_v
@@ -77,11 +78,12 @@ def main(argv):
     data['co2_emissions'] = y_emit
     data['cost_total'] = y_total
     data['cost_breakdown'] = y_breakdown
-    data['cost_percent'] = y_percents
+    data['cost_percent'] = y_percent
     # One data file per params file.
     data_dir = Path("results/v{}/data".format(DIR_VERSION))
     df = data_dir / "d_v{}_{}.txt".format(DIR_VERSION, args.paramsfile)
     with open(df, 'w+') as datafile:
+        np.set_printoptions(threshold=sys.maxsize)
         datafile.write(str(data))
     datafile.close()
 

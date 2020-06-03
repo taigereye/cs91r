@@ -1,12 +1,11 @@
 import sys
 
+from collections import OrderedDict
 import matplotlib.pyplot as plt
-import numpy as np
 from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
 from mdp.analysis.MdpCLI import MdpArgs
-import mdp.analysis.MdpData as mv
 from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
 
 
