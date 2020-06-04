@@ -24,18 +24,15 @@ def main(argv):
         sf = script_dir / "run_{}.sh".format(paramsfile)
         with open(sf, 'w+') as scriptfile:
             scriptfile.write("#!/bin/bash\n")
-            scriptfile.write("#SBATCH -n {:d}    # Number of cores (-n)\n")
+            scriptfile.write("#SBATCH -n {:d}    # Number of cores (-n)\n".format(args.cores))
             scriptfile.write("#SBATCH -N 2    # Ensure that all cores are on one Node (-N)\n")
-            scriptfile.write("#SBATCH -t 0-{:02d}:00    # Runtime in D-HH:MM, minimum of 10 minutes\n")
-            scriptfile.write("#SBATCH -p tambe    # Partition to submit to")
-            scriptfile.write("#SBATCH --mem={:d}000    # Memory pool for all cores (see also --mem-per-cpu)\n")
+            scriptfile.write("#SBATCH -t 0-{:02d}:00    # Runtime in D-HH:MM, minimum of 10 minutes\n".format(args.hrs))
+            scriptfile.write("#SBATCH -p tambe    # Partition to submit to\n")
+            scriptfile.write("#SBATCH --mem={:d}000    # Memory pool for all cores (see also --mem-per-cpu)\n".format(args.gigs))
             scriptfile.write("#SBATCH -o myoutput_%j.out    # File to which STDOUT will be written, %j inserts jobid\n")
             scriptfile.write("#SBATCH -e myerrors_%j.err     # File to which STDERR will be written, %j inserts j\n")
             scriptfile.write("module load Anaconda3/2019.10\n")
-            scriptfile.write("python fill_mdp_fh_data.py -p {}\n".format(args.cores,
-                                                                         args.hrs,
-                                                                         args.gigs,
-                                                                         paramsfile))
+            scriptfile.write("python fill_mdp_fh_data.py -p {}\n".format(paramsfile))
         scriptfile.close()
 
 
