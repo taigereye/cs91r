@@ -20,7 +20,7 @@ class MdpDataGatherer():
         return mdp_fh
 
     def convert_to_percent(self, data):
-        data['mean'] = data['mean']*100
+        data['middle'] = data['middle']*100
         data['lower'] = data['lower']*100
         data['upper'] = data['upper']*100
         return data
@@ -28,11 +28,11 @@ class MdpDataGatherer():
     def get_data_component(self, data, key, mean_only=False):
         y_all = data[key]
         if mean_only:
-            return self.calc_data_bounds(y_all)['mean']
+            return self.calc_data_bounds(y_all)['middle']
         else:
             return self.calc_data_bounds(y_all)
 
-    def set_ci(self, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
+    def set_ci(self, ci_type="QRT", n_dev=1, q_lower=0.10, q_upper=0.90):
         self.ci_type = ci_type
         self.n_dev = n_dev
         self.q_lower = q_lower
@@ -169,18 +169,18 @@ class MdpDataGatherer():
         return policy_annotated
 
     # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
-    def calc_data_bounds(self, data_all, axis=0, ci_type="QRT", n_dev=1, q_lower=0.25, q_upper=0.75):
+    def calc_data_bounds(self, data_all, axis=0, ci_type="QRT", n_dev=1, q_lower=0.10, q_upper=0.90):
         data = dict()
         self.set_ci(ci_type, n_dev, q_lower, q_upper)
         if self.ci_type == "ABS":
-            mean, lower, upper = self._calc_data_bounds_abs(data_all, axis)
+            middle, lower, upper = self._calc_data_bounds_abs(data_all, axis)
         elif self.ci_type == "QRT":
-            mean, lower, upper = self._calc_data_bounds_qrt(data_all, axis, self.q_lower, self.q_upper)
+            middle, lower, upper = self._calc_data_bounds_qrt(data_all, axis, self.q_lower, self.q_upper)
         elif self.ci_type == "STD":
-            mean, lower, upper = self._calc_data_bounds_std(data_all, axis, self.n_dev)
+            middle, lower, upper = self._calc_data_bounds_std(data_all, axis, self.n_dev)
         else:
             raise ValueError("ci_type must be ABS, QRT, or STD: {}".format(self.ci_type))
-        data['mean'] = mean
+        data['middle'] = middle
         data['lower'] = lower
         data['upper'] = upper
         return data
@@ -196,6 +196,7 @@ class MdpDataGatherer():
     def _calc_data_bounds_qrt(self, data_all, axis, q_lower, q_upper):
         data_df = pd.DataFrame(data_all)
         mean = data_df.mean(axis=axis)
+        median = data_df.quantile(q=0.5, axis=axis)
         lower = data_df.quantile(q=q_lower, axis=axis)
         upper = data_df.quantile(q=q_upper, axis=axis)
         return mean.values, lower.values, upper.values
@@ -320,7 +321,7 @@ class MdpPlotter():
         w = min(width, 1.0/len(y_bars))
         for i in range(len(y_bars)):
             if error is not None:
-                self.ax.bar(x+(i*w), y_bars[i]['mean'], width=w, color=colors[i], label=bar_labels[i])
+                self.ax.bar(x+(i*w), y_bars[i]['middle'], width=w, color=colors[i], label=bar_labels[i])
             else:
                 self.ax.bar(x+(i*w), y_bars[i], yerr=error, width=w, color=colors[i], ecolor='k', label=bar_labels[i])
         self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
@@ -344,7 +345,7 @@ class MdpPlotter():
                    colors=None, legend_loc='best', CI=False):
         colors = self._get_colors(colors, len(line_labels))
         for i in range(len(y_lines)):
-            self.ax.plot(x, y_lines[i]['mean'], color=colors[i], label=line_labels[i])
+            self.ax.plot(x, y_lines[i]['middle'], color=colors[i], label=line_labels[i])
             if CI:
                 self.ax.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.1)
         self._set_y_range(self.ax, y_min, y_max)
@@ -365,10 +366,10 @@ class MdpPlotter():
         w = min(width, 1.0/len(y_bars_all))
         for i in range(len(y_bars_all)):
             y_bars = y_bars_all[i]
-            self.ax.bar(x+i*w, y_bars['mean'][0], width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
+            self.ax.bar(x+i*w, y_bars['middle'][0], width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
             for j in np.arange(1, len(bar_labels)):
-                y = y_bars['mean'][j]
-                bottom = np.sum(y_bars['mean'][0:j], axis=0)
+                y = y_bars['middle'][j]
+                bottom = np.sum(y_bars['middle'][0:j], axis=0)
                 self.ax.bar(x+i*w, y, width=w, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*a, edgecolor='w')
         self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)
@@ -397,7 +398,7 @@ class MdpPlotter():
         colors = self._get_colors(colors, len(line_labels))
         self.axT = self.ax.twinx()
         for i in range(len(y_lines)):
-            self.axT.plot(x, y_lines[i]['mean'], color=colors[i], label=line_labels[i])
+            self.axT.plot(x, y_lines[i]['middle'], color=colors[i], label=line_labels[i])
             if CI:
                 self.axT.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.1)
         self.axT.set_ylabel(y_label)

@@ -38,7 +38,7 @@ def main(argv):
     else:
         mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
         for mdp_fh in mdp_fh_all:
-            y_emit.append(cl.calc_data_bounds(mdp_data.co2_emissions(mdp_fh))['mean'])
+            y_emit.append(cl.calc_data_bounds(mdp_data.co2_emissions(mdp_fh))['middle'])
 
     targets = cl.get_emissions_target(args.version, args.targetsfile.replace("3", "1").replace("5", "1"))
 

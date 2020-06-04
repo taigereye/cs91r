@@ -50,7 +50,7 @@ def main(argv):
     else:
         mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
         for mdp_fh in mdp_fh_all:
-            y_l.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'l'))['mean'])
+            y_l.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'l'))['middle'])
             y_price.append(mdp_data.calc_data_bounds(mdp_data.co2_current_price(mdp_fh)))
             y_tax.append(mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh)))
             y_emit.append(mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh)))

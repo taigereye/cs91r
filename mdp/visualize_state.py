@@ -47,10 +47,10 @@ def main(argv):
     else:
         mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
         for mdp_fh in mdp_fh_all:
-            y_v.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'v'))['mean'])
-            y_r.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'r'))['mean'])
-            y_l.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'l'))['mean'])
-            y_e.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'e'))['mean'])
+            y_v.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'v'))['middle'])
+            y_r.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'r'))['middle'])
+            y_l.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'l'))['middle'])
+            y_e.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'e'))['middle'])
 
     figs_state = []
     mdp_plot = MdpPlotter()
