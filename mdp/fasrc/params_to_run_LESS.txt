@@ -22,3 +22,15 @@
 5_sweden_mean
 5_UK_mean
 5_USA_mean
+1_finland_half
+1_sweden_half
+1_UK_half
+1_USA_half
+3_finland_half
+3_sweden_half
+3_UK_half
+3_USA_half
+5_finland_half
+5_sweden_half
+5_UK_half
+5_USA_half

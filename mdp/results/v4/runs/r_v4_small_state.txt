@@ -31,7 +31,7 @@ c_phs_fix: 15
 p_adv_tech: [0.12, 0.11, 0]
 disc_rate: 0.04
 emit_targets: 3_half_dec
-target_delta: 100000
+target_max_delta: 100000
 
 
 

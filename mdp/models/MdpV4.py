@@ -40,7 +40,7 @@ class MdpModelV4():
                             'p_adv_tech',
                             'disc_rate',
                             'emit_targets',
-                            'target_delta']
+                            'target_max_delta']
 
     # Create params dict from list of param values in order.
     def create_params(self, param_list):
@@ -82,7 +82,7 @@ class MdpFiniteHorizonV4():
         self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
         self.emit_targets = self.mdp_cost.read_targetsfile(params['emit_targets'])
-        self.target_delta = params['target_delta']
+        self.target_max_delta = params['target_max_delta']
         # Constants
         self.scale_down = 9
         self.n_adjustments = 3
@@ -262,12 +262,12 @@ class MdpFiniteHorizonV4():
     def calc_emit_delta(self, t, f):
         target = self.emit_targets[t//self.co2_tax_cycle]
         co2_emit = self.mdp_cost.co2_emit(f)
-        return co2_emit - target
+        return target, co2_emit - target
 
     def calc_next_adjustment(self, t, r):
         f = self.n_plants - r
-        delta = self.calc_emit_delta(t, f)
-        if abs(delta) < self.target_delta:
+        target, delta = self.calc_emit_delta(t, f)
+        if abs(delta)/target < self.target_max_delta/100:
             return 0
         elif delta < 0:
             return 1
@@ -377,7 +377,7 @@ class MdpCostCalculatorV4():
         self.co2_tax_adjust = params['co2_tax_adjust']
         self.co2_tax_cycle = params['co2_tax_cycle']
         self.emit_targets = self.read_targetsfile(params['emit_targets'])
-        self.target_delta = params['target_delta']
+        self.target_max_delta = params['target_max_delta']
         # FF plants
         self.ff_size = params['ff_size']
         self.ff_capacity = params['ff_capacity']

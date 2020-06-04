@@ -2,6 +2,7 @@ import sys
 
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+import numpy as np
 from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
@@ -16,8 +17,8 @@ def main(argv):
     parser.add_targetsfile()
     parser.add_time_range()
     parser.add_iterations()
-    parser.add_use_data()
     parser.add_confidence_interval()
+    parser.add_use_data()
     parser.add_save()
     args = parser.get_args()
 

@@ -15,8 +15,8 @@ def main(argv):
     parser.add_paramsfile_multiple()
     parser.add_time_range()
     parser.add_iterations()
-    parser.add_use_data()
     parser.add_confidence_interval()
+    parser.add_use_data()
     parser.add_granular()
     parser.add_save()
     args = parser.get_args()
@@ -65,11 +65,11 @@ def main(argv):
     mdp_plot.plot_lines(x, y_total, args.paramsfiles, CI=args.confidenceinterval)
     fig_total = mdp_plot.finalize()
     # Absolute cost breakdown
-    mdp_plot.initialize("Absolute Cost Breakdown", "Time (years)", "Cost (USD/yr)")
+    mdp_plot.initialize("Absolute Annual Cost Breakdown", "Time (years)", "Cost (USD/yr)")
     mdp_plot.plot_stacked_bars(x, y_breakdown, components)
     fig_breakdown = mdp_plot.finalize()
     # Percentage cost breakdown
-    mdp_plot.initialize("Percentage Cost Breakdown", "Time (years)", "Cost (%/yr)")
+    mdp_plot.initialize("Percentage Annual Cost Breakdown", "Time (years)", "Cost (%/yr)")
     mdp_plot.plot_stacked_bars(x, y_percents, components)
     fig_percents = mdp_plot.finalize()
 

@@ -2,6 +2,7 @@ import sys
 
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+import numpy as np
 from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
@@ -14,22 +15,26 @@ COMP_VERSION = 3
 
 
 def main(argv):
-    parser = MdpArgs(description="plot CO2 related metrics of following MDP instance optimal policy")
+    parser = MdpArgs(description="plot tax adjusted vs. non-adjusted targets of following optimal MDP policy")
     parser.add_model_version()
     parser.add_paramsfile_multiple()
     parser.add_targetsfile()
     parser.add_time_range()
     parser.add_iterations()
-    parser.add_use_data()
     parser.add_confidence_interval()
+    parser.add_use_data()
     parser.add_save()
     args = parser.get_args()
 
-    if not parser.check_version(4, 4, "visualize_co2 only supported for MDP V4 or higher."):
+    if not parser.check_version(4, 4, "visualize_adjust only supported for MDP V4 or higher."):
         sys.exit(1)
 
     if not parser.check_paramfile_multiple():
         sys.exit(2)
+
+    if not args.targetsfile:
+        print("error: must pass in targetsfile.")
+        sys.exit(4)
 
     # MDP V3.
     params3 = cl.get_params_single(COMP_VERSION, args.paramsfiles[0])
@@ -38,7 +43,6 @@ def main(argv):
     # MDP V4.
     params4 = cl.get_params_single(args.version, args.paramsfiles[1])
     mdp_model4 = cl.get_mdp_model(args.version, [params4])
-    mdp_fh4 = cl.get_mdp_instance_single(mdp_model4, params4)
 
     t_range = cl.get_time_range(args, params3)
     if not t_range:
@@ -56,11 +60,12 @@ def main(argv):
     y_tax3 = mdp_data.calc_data_bounds(y_tax3)
 
     if args.usedata:
-        data = cl.get_mdp_data(args.version, args.paramsfile)
+        data = cl.get_mdp_data(args.version, args.paramsfiles[1])
         y_res4 = mdp_data.get_data_component(data, 'res_penetration')
         y_emit4 = mdp_data.get_data_component(data, 'co2_emissions')
         y_tax4 = mdp_data.get_data_component(data, 'co2_tax')
     else:
+        mdp_fh4 = cl.get_mdp_instance_single(mdp_model4, params4)
         y_res4 = mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh4))
         y_emit4 = mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh4))
         y_tax4 = mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh4))
@@ -79,8 +84,8 @@ def main(argv):
     figs_compare.append(fig)
     # CO2 emissions
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "Cost (ton/yr)")
-    mdp_plot.plot_lines(x, [y_emit4, y_emit4], params_names, CI=args.confidenceinterval)
-    mdp_plot.add_fixed_line(x, y_target, "Target")
+    mdp_plot.plot_lines(x, [y_emit3, y_emit4], params_names, CI=args.confidenceinterval)
+    # mdp_plot.add_fixed_line(x, y_target, "Target")
     fig = mdp_plot.finalize()
     figs_compare.append(fig)
     # CO2 tax collected

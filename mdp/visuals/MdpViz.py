@@ -111,9 +111,9 @@ class MdpDataGatherer():
         y_all = []
         for policy in policy_all:
             tax_levels = self.get_tax_levels(mdp_fh)
-            y_variables = self._policy_extract_state_variable('r', policy, tax_levels)
-            y_variables = np.asarray(y_variables) / mdp_fh.n_plants
-            y_all.append(y_variables)
+            y_res = self._policy_extract_state_variable('r', policy, tax_levels)
+            y_res = np.asarray(y_res) / mdp_fh.n_plants
+            y_all.append(y_res)
         return np.asarray(y_all)
 
     ## STATE
@@ -359,10 +359,10 @@ class MdpPlotter():
         w = min(width, 1.0/len(y_bars_all))
         for i in range(len(y_bars_all)):
             y_bars = y_bars_all[i]
-            self.ax.bar(x+i*w, y_bars[0], width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
-            for j in np.arange(1, len(y_bars)):
-                y = y_bars[j]
-                bottom = np.sum(y_bars[0:j], axis=0)
+            self.ax.bar(x+i*w, y_bars['mean'][0], width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
+            for j in np.arange(1, len(bar_labels)):
+                y = y_bars['mean'][j]
+                bottom = np.sum(y_bars['mean'][0:j], axis=0)
                 self.ax.bar(x+i*w, y, width=w, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*a, edgecolor='w')
         self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)

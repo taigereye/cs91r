@@ -15,8 +15,8 @@ def main(argv):
     parser.add_paramsfile_multiple()
     parser.add_time_range()
     parser.add_iterations()
-    parser.add_use_data()
     parser.add_confidence_interval()
+    parser.add_use_data()
     parser.add_save()
     args = parser.get_args()
 
@@ -73,7 +73,7 @@ def main(argv):
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
     # CO2 emissions
-    mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "Cost (ton/yr)")
+    mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
     mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
