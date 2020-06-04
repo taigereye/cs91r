@@ -593,4 +593,4 @@ class MdpCostCalculatorV4():
         with open(tf, 'r') as targetsfile:
             emit_targets = eval(targetsfile.read())
         targetsfile.close()
-        return emit_targets
+        return emit_targets['y']

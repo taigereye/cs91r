@@ -12,6 +12,12 @@ MDP_VERSION = 3
 DIR_VERSION = 4
 
 
+def calc_emit_dec(mdp_fh, y_emit, cycle):
+    emit_t0, emit_tN = y_emit[0], y_emit[mdp_fh.n_years-1]
+    emit_dec = round((emit_t0-emit_tN) / (mdp_fh.n_years//cycle-1), 2)
+    return emit_dec
+
+
 def main(argv):
     parser = MdpArgs(description="extract mean CO2 emissions at intervals of following MDP instance optimal policy")
     parser.add_paramsfile_single()
@@ -34,22 +40,25 @@ def main(argv):
     y_emit = np.sum(y_emit, axis=0)/args.iterations
 
     for y in args.cycle:
-        targets_mean, targets_dec = ([] for i in range(2))
-        emit_t0, emit_tN = y_emit[0], y_emit[mdp_fh.n_years-1]
-        emit_dec = (emit_t0-emit_tN) / round(mdp_fh.n_years/y)
-        idx = 0
-        # Extract CO2 emissions level at intervals of cycle length.
-        for i in range(round(mdp_fh.n_years/y)):
-            targets_mean.append(y_emit[idx])
-            targets_dec.append(emit_t0 - emit_dec*i)
-            idx += y
-        targets_dir = Path("visuals/v{}/targets".format(DIR_VERSION))
+        targets_mean, targets_dec = (dict() for i in range(2))
+        emit_dec = calc_emit_dec(mdp_fh, y_emit, y)
+
+        years_sampled = [i*y for i in range(0, mdp_fh.n_years//y)]
         # Sampled from mean of optimal policy.
-        tf_mean = targets_dir / "e_v{}_{}_{}_mean.txt".format(DIR_VERSION, y, args.paramsfile.replace("co2_tax_", ""))
+        targets_mean['x'] = years_sampled
+        targets_mean['y'] = [y_emit[i] for i in years_sampled]
+        # Decrement evenly to align with optimal policy.
+        targets_dec['x'] = years_sampled
+        targets_dec['y'] = [y_emit[0] - i*emit_dec for i in range(mdp_fh.n_years//y)]
+
+        targets_dir = Path("visuals/v{}/targets".format(DIR_VERSION))
+        name = args.paramsfile.replace("_exp", "").replace("_lin", "")
+
+        tf_mean = targets_dir / "e_v{}_{}_{}_mean.txt".format(DIR_VERSION, y, name)
         with open(tf_mean, 'w+') as targetsfile:
             targetsfile.write(str(targets_mean))
-        # Decrement evenly to align with optimal policy.
-        tf_dec = targets_dir / "e_v{}_{}_{}_dec.txt".format(DIR_VERSION, y, args.paramsfile.replace("co2_tax_", ""))
+
+        tf_dec = targets_dir / "e_v{}_{}_{}_dec.txt".format(DIR_VERSION, y, name)
         with open(tf_dec, 'w+') as targetsfile:
             targetsfile.write(str(targets_dec))
         targetsfile.close()

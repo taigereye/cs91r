@@ -89,14 +89,6 @@ class MdpArgs():
         return self.args
 
 
-def adjust_emissions_target_timeline(targets, cycle, t_range):
-    targets_adjusted = []
-    for i in range(len(targets)):
-        targets_adjusted.append(targets[i])
-        targets_adjusted.extend([targets[i] for j in range(cycle)])
-    return targets_adjusted[t_range[0]:t_range[1]]
-
-
 def get_emissions_target(version, targetsfile):
     targets_dir = Path("visuals/v{}/targets".format(version))
     tf = targets_dir / "e_v{}_{}.txt".format(version, targetsfile)

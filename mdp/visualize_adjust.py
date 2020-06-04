@@ -12,6 +12,14 @@ from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
 
 
 COMP_VERSION = 3
+START_YEAR = 2020
+
+
+def co2_emit(r):
+    f = 15 - r
+    kw_plant = 400000*0.60
+    hours_yr = 365*24
+    return f * (1.65/1e3*kw_plant*hours_yr)
 
 
 def main(argv):
@@ -54,26 +62,27 @@ def main(argv):
 
     x = mdp_data.get_time_range(t_range)
 
-    _, y_res3, y_emit3, y_tax3 = mv.avg_co2_probabilistic_v(mdp_fh3, t_range[0], t_range[1], args.iterations, True)
-    y_res3 = mdp_data.calc_data_bounds(y_res3)
+    _, y_res3, y_emit3, y_tax3 = mv.avg_co2_probabilistic_v(mdp_fh3, t_range[0], t_range[1],
+                                                            args.iterations, True, res_percent=True)
+    y_res3 = mdp_data.convert_to_percent(mdp_data.calc_data_bounds(y_res3))
     y_emit3 = mdp_data.calc_data_bounds(y_emit3)
     y_tax3 = mdp_data.calc_data_bounds(y_tax3)
 
     if args.usedata:
         data = cl.get_mdp_data(args.version, args.paramsfiles[1])
-        y_res4 = mdp_data.get_data_component(data, 'res_penetration')
+        y_res4 = mdp_data.convert_to_percent(mdp_data.get_data_component(data, 'res_penetration'))
         y_emit4 = mdp_data.get_data_component(data, 'co2_emissions')
         y_tax4 = mdp_data.get_data_component(data, 'co2_tax')
     else:
         mdp_fh4 = cl.get_mdp_instance_single(mdp_model4, params4)
-        y_res4 = mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh4))
+        y_res4 = mdp_data.convert_to_percent(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh4)))
         y_emit4 = mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh4))
         y_tax4 = mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh4))
 
     targets = cl.get_emissions_target(args.version, args.targetsfile)
-    y_target = cl.adjust_emissions_target_timeline(targets, params4['co2_tax_cycle'], t_range)
+    targets['x'] = [x + START_YEAR for x in targets['x']]
 
-    params_names = ["{}: V3".format(args.paramsfiles[0]), "{}: V4".format(args.paramsfiles[1])]
+    params_names = ["V3: {}".format(args.paramsfiles[0]), "V4: {}".format(args.paramsfiles[1])]
 
     figs_compare = []
     mdp_plot = MdpPlotter()
@@ -85,7 +94,7 @@ def main(argv):
     # CO2 emissions
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "Cost (ton/yr)")
     mdp_plot.plot_lines(x, [y_emit3, y_emit4], params_names, CI=args.confidenceinterval)
-    # mdp_plot.add_fixed_line(x, y_target, "Target")
+    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target", marker='^')
     fig = mdp_plot.finalize()
     figs_compare.append(fig)
     # CO2 tax collected

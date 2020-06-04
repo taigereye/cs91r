@@ -19,6 +19,12 @@ class MdpDataGatherer():
         self.instances[paramsfile] = mdp_fh
         return mdp_fh
 
+    def convert_to_percent(self, data):
+        data['mean'] = data['mean']*100
+        data['lower'] = data['lower']*100
+        data['upper'] = data['upper']*100
+        return data
+
     def get_data_component(self, data, key, mean_only=False):
         y_all = data[key]
         if mean_only:
@@ -374,17 +380,17 @@ class MdpPlotter():
         if not color:
             color = 'k'
         if is_dashed:
-            self.ax.plot(x, y, color=color, label=label, linestyle='dashed')
+            self.ax.plot(x, y, color=color, label=label, zorder=100, linestyle='dashed')
         else:
-            self.ax.plot(x, y, color=color, label=label)
+            self.ax.plot(x, y, color=color, label=label, zorder=100)
 
     def add_scatter_points(self, x, y, label, color=None, marker=None):
         if not color:
             color = 'k'
         if marker:
-            self.ax.scatter(x, y, color=color, label=label, marker='dashed')
+            self.ax.scatter(x, y, color=color, label=label, zorder=100, marker=marker)
         else:
-            self.ax.scatter(x, y, color=color, label=label)
+            self.ax.scatter(x, y, color=color, label=label, zorder=100)
 
     def add_twin_lines(self, x, y_lines, y_label, line_labels, y_min=None, y_max=None,
                        colors=None, legend_loc='best', CI=False, y_colors=None):

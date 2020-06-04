@@ -7,7 +7,7 @@
 'ff_lifetime': 32,
 'res_capacity': 0.30,
 'res_lifetime': 25,
-'c_co2_init': 33.47,
+'c_co2_init': 41.84,
 'c_co2_inc': 5,
 'co2_tax_type': "EXP",
 'c_ff_cap': 3429,

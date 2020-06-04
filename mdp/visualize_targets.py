@@ -10,6 +10,9 @@ from mdp.analysis.MdpCLI import MdpArgs
 from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
 
 
+START_YEAR = 2020
+
+
 def main(argv):
     parser = MdpArgs(description="plot CO2 and RES actual vs. target of following MDP instance optimal policy")
     parser.add_model_version()
@@ -49,16 +52,16 @@ def main(argv):
     if args.usedata:
         for paramfile in args.paramsfiles:
             data = cl.get_mdp_data(args.version, paramfile)
-            y_res.append(mdp_data.get_data_component(data, 'res_penetration'))
+            y_res.append(mdp_data.convert_to_percent(mdp_data.get_data_component(data, 'res_penetration')))
             y_emit.append(mdp_data.get_data_component(data, 'co2_emissions'))
     else:
         mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
         for mdp_fh in mdp_fh_all:
-            y_res.append(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh)))
+            y_res.append(mdp_data.convert_to_percent(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh))))
             y_emit.append(mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh)))
 
     targets = cl.get_emissions_target(args.version, args.targetsfile)
-    y_target = cl.adjust_emissions_target_timeline(targets, params_all[0]['co2_tax_cycle'], t_range)
+    targets['x'] = [x + START_YEAR for x in targets['x']]
 
     mdp_plot = MdpPlotter()
     # RES penetration
@@ -68,7 +71,7 @@ def main(argv):
     # CO2 emissions (actual vs. target)
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
     mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
-    mdp_plot.add_fixed_line(x, y_target, "Target")
+    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target", marker='^')
     fig_emit = mdp_plot.finalize()
 
     visuals_dir = Path("visuals/v{}/plots".format(args.version))

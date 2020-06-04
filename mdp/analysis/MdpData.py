@@ -292,14 +292,14 @@ def opt_policy_res_percent(mdp_fh_res_percents, t_range, n_iter, params_names, R
     tN = t_range[1]
     x = convert_x_time_2020(t0, tN)
     x_label = "Time"
-    y_all = res_probabilistic_v(mdp_fh_res_percents, t0, tN, n_iter, p_adv_vary)
+    y_all = avg_res_probabilistic_v(mdp_fh_res_percents, t0, tN, n_iter, p_adv_vary)
     y_all, scale_str = scale_y_dollar_data(y_all)
     y_label = "RES Penetration (%)"
     title = "Average Renewable Penetration"
     return mplt.plot_multiple_line(x, y_all, 1.0, x_label, y_label, params_names, title, RES, is_fixed=False)
 
 
-def res_probabilistic_v(mdp_fh_res_percents, t0, tN, n_iter, p_adv_vary):
+def avg_res_probabilistic_v(mdp_fh_res_percents, t0, tN, n_iter, p_adv_vary):
     res_all = []
     for mdp_fh in mdp_fh_res_percents:
         policy_all = []
@@ -377,16 +377,20 @@ def co2_emit_tax_wrapper(mdp_fh, policy_type, t_range, n_iter, is_annual=False, 
                                                        y_label_r, labels, title, is_annual=is_annual)
 
 
-def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary):
+def avg_co2_probabilistic_v(mdp_fh, t0, tN, n_iter, p_adv_vary, res_percent=False):
     policy_all = []
     runs = run_techstage_transition(mdp_fh, n_iter, p_adv_vary=p_adv_vary)
     for iteration in runs:
         policy_all.append(get_opt_policy_vary_techstage(mdp_fh, iteration))
     y_r = [extract_idx_annotated_policy(policy[t0:tN], 'r') for policy in policy_all]
+    y_res = [[(r/mdp_fh.n_plants) for r in extract_idx_annotated_policy(policy[t0:tN], 'r')] for policy in policy_all]
     y_emit = [calc_co2_emit_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
     y_tax = [calc_co2_tax_annotated_policy(mdp_fh, policy[t0:tN]) for policy in policy_all]
     runs = np.sum(runs, axis=0)[t0:tN]/n_iter
-    return runs, y_r, y_emit, y_tax
+    if res_percent:
+        return runs, y_res, y_emit, y_tax
+    else:
+        return runs, y_r, y_emit, y_tax
 
 
 # STORAGE

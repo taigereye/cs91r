@@ -40,11 +40,10 @@ def main(argv):
         for mdp_fh in mdp_fh_all:
             y_emit.append(cl.calc_data_bounds(mdp_data.co2_emissions(mdp_fh))['mean'])
 
-    targets = cl.get_emissions_target(args.version, args.targetsfile)
-    y_target = cl.adjust_emissions_target_timeline(targets, params_all[0]['co2_tax_cycle'], t_range)
+    targets = cl.get_emissions_target(args.version, args.targetsfile.replace("3", "1").replace("5", "1"))
 
-    y_mse = [mean_squared_error(y_target, y, squared=True) for y in y_emit]
-    y_rmse = [mean_squared_error(y_target, y, squared=False) for y in y_emit]
+    y_mse = [mean_squared_error(targets['y'], y, squared=True) for y in y_emit]
+    y_rmse = [mean_squared_error(targets['y'], y, squared=False) for y in y_emit]
 
     print("\nCO2 emissions MSE and RMSE:\n")
     for mse, rmse, paramsfile in zip(y_mse, y_rmse, args.paramsfiles):
