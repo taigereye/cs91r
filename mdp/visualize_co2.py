@@ -41,8 +41,8 @@ def main(argv):
 
     y_l, y_price, y_tax, y_emit = ([] for i in range(4))
     if args.usedata:
-        for paramfile in args.paramsfiles:
-            data = cl.get_mdp_data(args.version, paramfile)
+        for pf in args.paramsfiles:
+            data = cl.get_mdp_data(args.version, pf)
             y_l.append(mdp_data.get_data_component(data, 'tax_level', mean_only=True))
             y_price.append(mdp_data.get_data_component(data, 'co2_price'))
             y_tax.append(mdp_data.get_data_component(data, 'co2_tax'))

@@ -19,6 +19,12 @@ class MdpDataGatherer():
         self.instances[paramsfile] = mdp_fh
         return mdp_fh
 
+    def convert_to_cumulative(self, data):
+        data['middle'] = np.cumsum(np.asarray(data['middle']), axis=0)
+        data['lower'] = np.cumsum(np.asarray(data['lower']), axis=0)
+        data['upper'] = np.cumsum(np.asarray(data['upper']), axis=0)
+        return data
+
     def convert_to_percent(self, data):
         data['middle'] = data['middle']*100
         data['lower'] = data['lower']*100
@@ -347,7 +353,7 @@ class MdpPlotter():
         for i in range(len(y_lines)):
             self.ax.plot(x, y_lines[i]['middle'], color=colors[i], label=line_labels[i])
             if CI:
-                self.ax.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.1)
+                self.ax.fill_between(x, y_lines[i]['lower'], y_lines[i]['upper'], color=colors[i], alpha=0.15)
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 

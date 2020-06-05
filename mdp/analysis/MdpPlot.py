@@ -144,8 +144,7 @@ def plot_multiple_line(x, y_all, y_max, x_label, y_label, labels, title, scalar,
     ax.set(xlabel=x_label, ylabel=y_label)
     if y_max:
         ax.set_ylim(0, y_max)
-    ax.set_ylim(bottom=0)
-    ax.legend(loc='lower right')
+    ax.legend(loc='best')
     ax.set_title(title)
     fig.tight_layout()
     return fig

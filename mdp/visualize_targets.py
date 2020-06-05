@@ -50,8 +50,8 @@ def main(argv):
 
     y_res, y_emit = ([] for i in range(2))
     if args.usedata:
-        for paramfile in args.paramsfiles:
-            data = cl.get_mdp_data(args.version, paramfile)
+        for pf in args.paramsfiles:
+            data = cl.get_mdp_data(args.version, pf)
             y_res.append(mdp_data.convert_to_percent(mdp_data.get_data_component(data, 'res_penetration')))
             y_emit.append(mdp_data.get_data_component(data, 'co2_emissions'))
     else:
@@ -71,7 +71,7 @@ def main(argv):
     # CO2 emissions (actual vs. target)
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
     mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
-    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target", marker='^')
+    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target")
     fig_emit = mdp_plot.finalize()
 
     visuals_dir = Path("visuals/v{}/plots".format(args.version))

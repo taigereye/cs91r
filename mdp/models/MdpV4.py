@@ -486,10 +486,9 @@ class MdpCostCalculatorV4():
         return c_co2_base * ((1+c_co2_inc/100)**t)
 
     def _adjust_co2_tax(self, l):
-        idx_default = self.n_total_levels//2
         # Default CO2 tax is always middle level.
-        c_co2_base = self.c_co2_base_levels[idx_default]
-        c_co2_inc = self.c_co2_inc_levels[idx_default]
+        c_co2_base = self.c_co2_base_levels[len(self.c_co2_base_levels)//2]
+        c_co2_inc = self.c_co2_inc_levels[len(self.c_co2_inc_levels)//2]
         if self.n_tax_levels == 1:
             return c_co2_base, c_co2_inc
         elif self.co2_tax_adjust == "BASE":

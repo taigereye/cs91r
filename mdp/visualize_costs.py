@@ -45,11 +45,12 @@ def main(argv):
 
     x = mdp_data.get_time_range(t_range)
 
-    y_total, y_breakdown, y_percents = ([] for i in range(3))
+    y_total, y_cum, y_breakdown, y_percents = ([] for i in range(3))
     if args.usedata:
-        for paramfile in args.paramsfiles:
-            data = cl.get_mdp_data(args.version, paramfile)
+        for pf in args.paramsfiles:
+            data = cl.get_mdp_data(args.version, pf)
             y_total.append(mdp_data.get_data_component(data, 'cost_total'))
+            y_cum.append(mdp_data.get_data_component(data, 'cost_total'))
             y_breakdown.append(mdp_data.get_data_component(data, 'cost_breakdown'))
             y_percents.append(mdp_data.get_data_component(data, 'cost_percent'))
     else:

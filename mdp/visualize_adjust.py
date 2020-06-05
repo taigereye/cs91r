@@ -49,10 +49,10 @@ def main(argv):
     mdp_model3 = cl.get_mdp_model(COMP_VERSION, [params3])
     mdp_fh3 = cl.get_mdp_instance_single(mdp_model3, params3)
     # MDP V4.
-    params4 = cl.get_params_single(args.version, args.paramsfiles[1])
-    mdp_model4 = cl.get_mdp_model(args.version, [params4])
+    params4_all = cl.get_params_multiple(args.version, args.paramsfiles[1:])
+    mdp_model4 = cl.get_mdp_model(args.version, params4_all)
 
-    t_range = cl.get_time_range(args, params3)
+    t_range = cl.get_time_range(args, params4_all[0])
     if not t_range:
         sys.exit(3)
 
@@ -68,38 +68,45 @@ def main(argv):
     y_emit3 = mdp_data.calc_data_bounds(y_emit3)
     y_tax3 = mdp_data.calc_data_bounds(y_tax3)
 
+    y_res4, y_emit4, y_tax4 = ([] for i in range(3))
     if args.usedata:
-        data = cl.get_mdp_data(args.version, args.paramsfiles[1])
-        y_res4 = mdp_data.convert_to_percent(mdp_data.get_data_component(data, 'res_penetration'))
-        y_emit4 = mdp_data.get_data_component(data, 'co2_emissions')
-        y_tax4 = mdp_data.get_data_component(data, 'co2_tax')
+        for pf in args.paramsfiles[1:]:
+            data = cl.get_mdp_data(args.version, pf)
+            y_res4.append(mdp_data.convert_to_percent(mdp_data.get_data_component(data, 'res_penetration')))
+            y_emit4.append(mdp_data.get_data_component(data, 'co2_emissions'))
+            y_tax4.append(mdp_data.get_data_component(data, 'co2_tax'))
     else:
-        mdp_fh4 = cl.get_mdp_instance_single(mdp_model4, params4)
-        y_res4 = mdp_data.convert_to_percent(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh4)))
-        y_emit4 = mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh4))
-        y_tax4 = mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh4))
+        mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model4, params4_all)
+        for mdp_fh4 in mdp_fh_all:
+            y_res4.append(mdp_data.convert_to_percent(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh4))))
+            y_emit4.append(mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh4)))
+            y_tax4.append(mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh4)))
+
+    y_res = [y_res3] + y_res4
+    y_emit = [y_emit3] + y_emit4
+    y_tax = [y_tax3] + y_tax4
 
     targets = cl.get_emissions_target(args.version, args.targetsfile)
     targets['x'] = [x + START_YEAR for x in targets['x']]
 
-    params_names = ["V3: {}".format(args.paramsfiles[0]), "V4: {}".format(args.paramsfiles[1])]
+    params_names = ["V3: {}".format(args.paramsfiles[0])] + ["V4: {}".format(pf) for pf in args.paramsfiles[1:]]
 
     figs_compare = []
     mdp_plot = MdpPlotter()
     # RES penetration
     mdp_plot.initialize("RES Penetration", "Time (years)", "RES Penetration (%)")
-    mdp_plot.plot_lines(x, [y_res3, y_res4], params_names, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_res, params_names, CI=args.confidenceinterval)
     fig = mdp_plot.finalize()
     figs_compare.append(fig)
     # CO2 emissions
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "Cost (ton/yr)")
-    mdp_plot.plot_lines(x, [y_emit3, y_emit4], params_names, CI=args.confidenceinterval)
-    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target", marker='^')
+    mdp_plot.plot_lines(x, y_emit, params_names, CI=args.confidenceinterval)
+    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target")
     fig = mdp_plot.finalize()
     figs_compare.append(fig)
     # CO2 tax collected
     mdp_plot.initialize("Annual CO2 Tax Collected", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_lines(x, [y_tax3, y_tax4], params_names, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_tax, params_names, CI=args.confidenceinterval)
     fig = mdp_plot.finalize()
     figs_compare.append(fig)
 

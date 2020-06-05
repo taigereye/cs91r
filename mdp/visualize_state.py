@@ -38,8 +38,8 @@ def main(argv):
 
     y_v, y_r, y_l, y_e = ([] for i in range(4))
     if args.usedata:
-        for paramsfile in args.paramsfiles:
-            data = cl.get_mdp_data(args.version, paramsfile)
+        for pf in args.paramsfiles:
+            data = cl.get_mdp_data(args.version, pf)
             y_v.append(mdp_data.get_data_component(data, 'tech_stage', mean_only=True))
             y_r.append(mdp_data.get_data_component(data, 'res_plants', mean_only=True))
             y_l.append(mdp_data.get_data_component(data, 'tax_level', mean_only=True))

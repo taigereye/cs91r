@@ -194,7 +194,7 @@ def total_cost_combine(mdp_fh_costs, param_names, t_range, n_iter, p_adv_vary=Tr
     y_label_cum = "Cumulative " + format_ylabel_dollar(scale_str, is_annual=False)
     title = "Average Total Cost Comparison"
     return mplt.plot_multiple_bar_twin_multiple_line(x, y_all_cum, y_all_ann, x_label, y_label_cum,
-                                                     y_label_ann, labels_cum, labels_ann, title, colors=['orangered', 'b'])
+                                                     y_label_ann, labels_cum, labels_ann, title)
 
 
 # Total annual and cumulative costs separately for different parameters with stochastic tech stage
@@ -326,7 +326,7 @@ def opt_policy_co2_emit(mdp_fh_co2_taxes, t_range, n_iter, params_names, CO2=Non
     y_all, scale_str = scale_y_dollar_data(y_all)
     y_label = format_ylabel_dollar(scale_str, is_annual=False).replace("Cost", "CO2 Emissions").replace("USD", "tons")
     title = "Average Annual CO2 Emissions"
-    return mplt.plot_multiple_line(x, y_all, 0, x_label, y_label, params_names, title, CO2, colors=['orangered', 'b'], is_fixed=False)
+    return mplt.plot_multiple_line(x, y_all, 0, x_label, y_label, params_names, title, CO2, is_fixed=False)
 
 
 def co2_emit_probilistic_v(mdp_fh_co2_taxes, t0, tN, n_iter, p_adv_vary):
