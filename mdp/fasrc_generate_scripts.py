@@ -9,7 +9,7 @@ def main(argv):
     parser.add_argument("-p", "--paramslist", help="txt file with newline separated list of paramsfiles")
     parser.add_argument("-c", "--cores", help="allotted cores on single machine", type=int, default=8)
     parser.add_argument("-t", "--hrs", help="total allotted runtime in hours", type=int, default=8)
-    parser.add_argument("-g", "--gigs", help="allotted memory in GB", type=int, default=128)
+    parser.add_argument("-g", "--gigs", help="allotted memory in GB", type=int, default=64)
     args = parser.parse_args()
 
     fasrc_dir = Path("fasrc/")
@@ -27,7 +27,7 @@ def main(argv):
             scriptfile.write("#SBATCH -n {:d}    # Number of cores (-n)\n".format(args.cores))
             scriptfile.write("#SBATCH -N 2    # Ensure that all cores are on one Node (-N)\n")
             scriptfile.write("#SBATCH -t 0-{:02d}:00    # Runtime in D-HH:MM, minimum of 10 minutes\n".format(args.hrs))
-            scriptfile.write("#SBATCH -p tambe    # Partition to submit to\n")
+            scriptfile.write("#SBATCH -p tambe,shared    # Partition to submit to\n")
             scriptfile.write("#SBATCH --mem={:d}000    # Memory pool for all cores (see also --mem-per-cpu)\n".format(args.gigs))
             scriptfile.write("#SBATCH -o myoutput_%j.out    # File to which STDOUT will be written, %j inserts jobid\n")
             scriptfile.write("#SBATCH -e myerrors_%j.err     # File to which STDERR will be written, %j inserts j\n")
