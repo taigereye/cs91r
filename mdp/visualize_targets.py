@@ -7,7 +7,7 @@ from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
 from mdp.analysis.MdpCLI import MdpArgs
-from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
+from mdp.analysis.MdpViz import MdpDataGatherer, MdpPlotter
 
 
 START_YEAR = 2020
@@ -30,10 +30,6 @@ def main(argv):
 
     if not parser.check_paramfile_multiple():
         sys.exit(2)
-
-    if not args.targetsfile:
-        print("error: must pass in targetsfile.")
-        sys.exit(4)
 
     params_all = cl.get_params_multiple(args.version, args.paramsfiles)
     mdp_model = cl.get_mdp_model(args.version, params_all)
@@ -60,8 +56,11 @@ def main(argv):
             y_res.append(mdp_data.convert_to_percent(mdp_data.calc_data_bounds(mdp_data.res_penetration(mdp_fh))))
             y_emit.append(mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh)))
 
-    targets = cl.get_emissions_target(args.version, args.targetsfile)
-    targets['x'] = [x + START_YEAR for x in targets['x']]
+    if args.targetsfile:
+        targets = cl.get_emissions_target(args.version, args.targetsfile)
+        targets['x'] = [x + START_YEAR for x in targets['x']]
+    else:
+        targets = None
 
     mdp_plot = MdpPlotter()
     # RES penetration
@@ -71,7 +70,8 @@ def main(argv):
     # CO2 emissions (actual vs. target)
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
     mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
-    mdp_plot.add_scatter_points(targets['x'], targets['y'], "Target")
+    if targets:
+        mdp_plot.add_scatter_points(targets['x'][t_range[0]:t_range[1]], targets['y'][t_range[0]:t_range[1]], "Emissions target")
     fig_emit = mdp_plot.finalize()
 
     visuals_dir = Path("visuals/v{}/plots".format(args.version))

@@ -5,21 +5,51 @@ import pandas as pd
 
 
 class MdpDataGatherer():
-    def __init__(self, mdp_model, n_iter, t_range, ci_type="ABS", n_dev=1):
+    def __init__(self, mdp_model, n_iter, t_range):
         self.mdp_model = mdp_model
         self.instances = OrderedDict()
         self.n_iter = n_iter
         self.t0 = t_range[0]
         self.tN = t_range[1]
         self.start_year = 2020
-        self.ci_type = ci_type
-        self.n_dev = n_dev
 
     def add_mdp_instance(self, paramsfile, params):
         assert(self.mdp_model.param_names == list(params.keys()))
         mdp_fh = self.mdp_model.run_fh(params)
         self.instances[paramsfile] = mdp_fh
         return mdp_fh
+
+    def convert_to_cumulative(self, data):
+        data['middle'] = np.cumsum(np.asarray(data['middle']), axis=0)
+        data['lower'] = np.cumsum(np.asarray(data['lower']), axis=0)
+        data['upper'] = np.cumsum(np.asarray(data['upper']), axis=0)
+        return data
+
+    def convert_to_percent(self, data):
+        data['middle'] = data['middle']*100
+        data['lower'] = data['lower']*100
+        data['upper'] = data['upper']*100
+        return data
+
+    def convert_to_time_range(self, data, t0, tN):
+        data['middle'] = data['middle'][t0:tN]
+        data['lower'] = data['lower'][t0:tN]
+        data['upper'] = data['upper'][t0:tN]
+        return data
+
+    def get_data_component(self, data, key, mean_only=False):
+        y_all = data[key]
+        data = self.calc_data_bounds(y_all)
+        if mean_only:
+            return self.convert_to_time_range(data, self.t0, self.tN)['middle']
+        else:
+            return self.convert_to_time_range(data, self.t0, self.tN)
+
+    def set_ci(self, ci_type="QRT", n_dev=1, q_lower=0.10, q_upper=0.90):
+        self.ci_type = ci_type
+        self.n_dev = n_dev
+        self.q_lower = q_lower
+        self.q_upper = q_upper
 
     ## COST
 
@@ -34,10 +64,10 @@ class MdpDataGatherer():
                 y_components.append(y)
             y_components = np.stack(np.asarray(y_components), axis=0)
             y_all.append(y_components)
-        y_mean = np.sum(y_all, axis=0)/self.n_iter
+        y_mean = np.sum(y_all, axis=0) / self.n_iter
         if is_percent:
-            y_mean = y_mean / np.sum(y_mean, axis=0)
-        return y_mean
+            y_mean = np.true_divide(np.asarray(y_mean), np.asarray(y_mean).sum(axis=1, keepdims=True))
+        return np.asarray(y_mean)
 
     # Get single cost component averaged across stochastic tech stage.
     def cost_single_component(self, mdp_fh, component):
@@ -46,7 +76,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_component = [mdp_fh.mdp_cost.calc_partial_cost(state, a, component) for state, a in policy]
             y_all.append(y_component)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     # Get total cost averaged across stochastic tech stage.
     def cost_total(self, mdp_fh):
@@ -55,7 +85,7 @@ class MdpDataGatherer():
         for policy in policy_all:
             y_total = [mdp_fh.mdp_cost.calc_total_cost(state, a) for state, a in policy]
             y_all.append(y_total)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     ## CO2
 
@@ -66,7 +96,23 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_price(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
+
+    def co2_base(self, mdp_fh):
+        policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
+        y_all = []
+        for policy in policy_all:
+            y_base = [mdp_fh.mdp_cost.co2_base(l) for ((t, v, r, l, e), a) in policy]
+            y_all.append(y_base)
+        return np.asarray(y_all)
+
+    def co2_inc(self, mdp_fh):
+        policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
+        y_all = []
+        for policy in policy_all:
+            y_inc = [mdp_fh.mdp_cost.co2_inc(l) for ((t, v, r, l, e), a) in policy]
+            y_all.append(y_inc)
+        return np.asarray(y_all)
 
     def co2_emissions(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -75,7 +121,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_emit(f) for f in y_ff]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     def co2_tax_collected(self, mdp_fh):
         policy_all, avg_techstages = self._aggregate_annotated_policies(mdp_fh)
@@ -84,7 +130,7 @@ class MdpDataGatherer():
             y_ff = self._get_ff_plants(policy, mdp_fh.n_plants)
             y_price = [mdp_fh.mdp_cost.co2_tax(t, l, f) for ((t, v, r, l, e), a), f in zip(policy, y_ff)]
             y_all.append(y_price)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     def target_emissions(self, mdp_fh):
         emit_steps = []
@@ -100,10 +146,10 @@ class MdpDataGatherer():
         y_all = []
         for policy in policy_all:
             tax_levels = self.get_tax_levels(mdp_fh)
-            y_variables = self._policy_extract_state_variable('r', policy, tax_levels)
-            y_variables = np.asarray(y_variables) / mdp_fh.n_plants
-            y_all.append(y_variables)
-        return self._calc_data_bounds(y_all)
+            y_res = self._policy_extract_state_variable('r', policy, tax_levels)
+            y_res = np.asarray(y_res) / mdp_fh.n_plants
+            y_all.append(y_res)
+        return np.asarray(y_all)
 
     ## STATE
 
@@ -114,7 +160,7 @@ class MdpDataGatherer():
             tax_levels = self.get_tax_levels(mdp_fh)
             y_variables = self._policy_extract_state_variable(var_code, policy, tax_levels)
             y_all.append(y_variables)
-        return self._calc_data_bounds(y_all)
+        return np.asarray(y_all)
 
     ## HELPER FUNCTIONS
 
@@ -151,22 +197,40 @@ class MdpDataGatherer():
             r += a
         return policy_annotated
 
-    def _calc_data_bounds(self, data_all, axis=0):
-        if self.ci_type == "ABS":
-            return self._calc_data_bounds_abs(data_all, axis)
-        elif self.ci_type == "STD":
-            return self._calc_data_bounds_std(data_all, axis, self.n_dev)
-        else:
-            raise ValueError("ci_type must be ABS or STD: {}".format(self.ci_type))
-
     # Calculate mean and confidence interval of max size given a matrix where each row is a data array.
+    def calc_data_bounds(self, data_all, axis=0, ci_type="QRT", n_dev=1, q_lower=0.10, q_upper=0.90):
+        data = dict()
+        self.set_ci(ci_type, n_dev, q_lower, q_upper)
+        if self.ci_type == "ABS":
+            middle, lower, upper = self._calc_data_bounds_abs(data_all, axis)
+        elif self.ci_type == "QRT":
+            middle, lower, upper = self._calc_data_bounds_qrt(data_all, axis, self.q_lower, self.q_upper)
+        elif self.ci_type == "STD":
+            middle, lower, upper = self._calc_data_bounds_std(data_all, axis, self.n_dev)
+        else:
+            raise ValueError("ci_type must be ABS, QRT, or STD: {}".format(self.ci_type))
+        data['middle'] = middle
+        data['lower'] = lower
+        data['upper'] = upper
+        return data
+
+    # Maximum upper and lower bounds.
     def _calc_data_bounds_abs(self, data_all, axis):
         lower = np.asarray(data_all).min(0)
         upper = np.asarray(data_all).max(0)
         mean = np.sum(data_all, axis=axis)/self.n_iter
         return mean, lower, upper
 
-    # Calculate mean and confidence interval of n * stdev given a matrix where each row is a data array.
+    # Quartile bounds.
+    def _calc_data_bounds_qrt(self, data_all, axis, q_lower, q_upper):
+        data_df = pd.DataFrame(data_all)
+        mean = data_df.mean(axis=axis)
+        median = data_df.quantile(q=0.5, axis=axis)
+        lower = data_df.quantile(q=q_lower, axis=axis)
+        upper = data_df.quantile(q=q_upper, axis=axis)
+        return mean.values, lower.values, upper.values
+
+    # Standard deviation bounds.
     def _calc_data_bounds_std(self, data_all, axis, n_dev):
         data_df = pd.DataFrame(data_all)
         std = data_df.std(axis=axis)
@@ -210,7 +274,8 @@ class MdpDataGatherer():
 
     # Convert absolute index to tax level.
     def _map_id_to_tax_level(self, idx, tax_levels):
-        tax_levels_centered = np.array(tax_levels) - tax_levels[len(tax_levels)//2]
+        # tax_levels_centered = np.array(tax_levels) - tax_levels[len(tax_levels)//2]
+        tax_levels_centered = np.array(tax_levels)
         return tax_levels_centered[idx]
 
     # Get single state variable as array.
@@ -229,8 +294,8 @@ class MdpDataGatherer():
             # Include plants built in current year with total RES plants.
             if var_code == 'r':
                 variables.append(state[idx]+a)
-            elif var_code == 'l':
-                variables.append(self._map_id_to_tax_level(state[idx], tax_levels))
+            # elif var_code == 'l':
+            #     variables.append(self._map_id_to_tax_level(state[idx], tax_levels))
             elif var_code == 'e':
                 variables.append(self._map_id_to_adjustment(state[idx]))
             else:
@@ -279,14 +344,16 @@ class MdpPlotter():
 
     ## PLOTS
 
-    def plot_bars(self, x, y_bars, bar_labels, y_min=None, y_max=None,
+    def plot_bars(self, x, y_bars, bar_labels, y_min=None, y_max=None, scale=1,
                   colors=None, legend_loc='best', width=0.20, error=None):
         colors = self._get_colors(colors, len(bar_labels))
+        w = min(width, 1.0/len(y_bars))
         for i in range(len(y_bars)):
             if error is not None:
-                self.ax.bar(x+(i*width), y_bars[i], width=width, color=colors[i], label=bar_labels[i])
+                self.ax.bar(x+(i*w), y_bars[i]['middle']/scale, width=w, color=colors[i], label=bar_labels[i])
             else:
-                self.ax.bar(x+(i*width), y_bars[i], yerr=error, width=width, color=colors[i], ecolor='k', label=bar_labels[i])
+                self.ax.bar(x+(i*w), y_bars[i]/scale, yerr=error, width=w, color=colors[i], ecolor='k', label=bar_labels[i])
+        self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
@@ -303,53 +370,63 @@ class MdpPlotter():
         self.ax.set_xticks(np.arange(0, y_matrix.shape[1], 2))
         self.ax.set_yticks(np.arange(y_matrix.shape[0]))
 
-    def plot_lines(self, x, y_lines, line_labels, y_min=None, y_max=None,
-                   colors=None, legend_loc='best', y_lower=None, y_upper=None):
+    def plot_lines(self, x, y_lines, line_labels, y_min=None, y_max=None, scale=1,
+                   colors=None, legend_loc='best', linestyle='solid', CI=False):
         colors = self._get_colors(colors, len(line_labels))
         for i in range(len(y_lines)):
-            self.ax.plot(x, y_lines[i], color=colors[i], label=line_labels[i])
-            if y_upper is not None and y_lower is not None:
-                self.ax.fill_between(x, y_lower[i], y_upper[i], color=colors[i], alpha=0.1)
+            self.ax.plot(x, y_lines[i]['middle']/scale, color=colors[i], label=line_labels[i], linestyle=linestyle)
+            if CI:
+                self.ax.fill_between(x, y_lines[i]['lower']/scale, y_lines[i]['upper']/scale, color=colors[i], alpha=0.15)
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
 
-    def plot_stacked_bar(self, x, y_bars, bar_labels, y_min=None, y_max=None,
-                         colors=None, legend_loc='best', width=0.25):
-        colors = self._get_colors(colors, len(bar_labels))
-        self.ax.bar(x, y_bars[0], width=width, label=bar_labels[0], color=colors[0], edgecolor='w')
-        for i in np.arange(1, len(y_bars)):
-            y = y_bars[i]
-            bottom = np.sum(y_bars[0:i], axis=0)
-            self.ax.bar(x, y, width=width, bottom=bottom, label=bar_labels[i], color=colors[i], edgecolor='w')
+    def plot_scatter(self, x, y_scatter, scatter_labels, y_min=None, y_max=None,
+                     scale=1, colors=None, legend_loc='best', marker='.'):
+        colors = self._get_colors(colors, len(scatter_labels))
+        for i in range(len(y_scatter)):
+            self.ax.scatter(x, y_scatter[i]/scale, color=colors[i], marker=marker, label=scatter_labels[i])
         self._set_y_range(self.ax, y_min, y_max)
         self.ax.legend(loc=legend_loc)
+
+    def plot_stacked_bars(self, x, y_bars_all, bar_labels, y_min=None, y_max=None, scale=1,
+                          colors=None, legend_loc='best', width=0.25):
+        colors = self._get_colors(colors, len(bar_labels))
+        a = 1.0 / len(y_bars_all)
+        w = min(width, 1.0/len(y_bars_all))
+        for i in range(len(y_bars_all)):
+            y_bars = y_bars_all[i]
+            self.ax.bar(x+i*w, y_bars['middle'][0]/scale, width=w, label=bar_labels[0], color=colors[0], alpha=1.0-i*a, edgecolor='w')
+            for j in np.arange(1, len(bar_labels)):
+                y = y_bars['middle'][j]
+                bottom = np.sum(y_bars['middle'][0:j], axis=0)
+                self.ax.bar(x+i*w, y/scale, width=w, bottom=bottom, label=bar_labels[j], color=colors[j], alpha=1.0-i*a, edgecolor='w')
+        self.ax.bar(x+(i+1)*w, np.zeros(len(x)), width=w, color='w', edgecolor='w')
+        self._set_y_range(self.ax, y_min, y_max)
+        self.ax.legend(loc=legend_loc, labels=bar_labels)
 
     ## ADD ONS
 
-    def add_fixed_line(self, x, y, label, color=None, is_dashed=False):
+    def add_fixed_line(self, x, y, label, scale=1, color=None, legend_loc='best', linestyle='solid'):
         if not color:
             color = 'k'
-        if is_dashed:
-            self.ax.plot(x, y, color=color, label=label, linestyle='dashed')
-        else:
-            self.ax.plot(x, y, color=color, label=label)
+        self.ax.plot(x, y, scale=scale, color=color, label=label, zorder=100, linestyle=linestyle)
+        self.ax.legend(loc=legend_loc)
 
-    def add_scatter_points(self, x, y, label, color=None, marker=None):
+    def add_scatter_points(self, x, y, label, scale=1, color=None, legend_loc='best', marker='.'):
         if not color:
             color = 'k'
-        if marker:
-            self.ax.scatter(x, y, color=color, label=label, marker='dashed')
-        else:
-            self.ax.scatter(x, y, color=color, label=label)
+        y = np.asarray(y)
+        self.ax.scatter(x, y/scale, color=color, label=label, zorder=100, marker=marker)
+        self.ax.legend(loc=legend_loc)
 
-    def add_twin_lines(self, x, y_lines, y_label, line_labels, y_min=None, y_max=None,
-                       colors=None, legend_loc='best', y_lower=None, y_upper=None, y_colors=None):
+    def add_twin_lines(self, x, y_lines, y_label, line_labels, y_min=None, y_max=None, scale=1,
+                       colors=None, legend_loc='best', CI=False, y_colors=None):
         colors = self._get_colors(colors, len(line_labels))
         self.axT = self.ax.twinx()
         for i in range(len(y_lines)):
-            self.axT.plot(x, y_lines[i], color=colors[i], label=line_labels[i])
-            if y_upper is not None and y_lower is not None:
-                self.axT.fill_between(x, y_lower[i], y_upper[i], color=colors[i], alpha=0.1)
+            self.axT.plot(x, y_lines[i]['middle']/scale, color=colors[i], label=line_labels[i])
+            if CI:
+                self.axT.fill_between(x, y_lines[i]['lower']/scale, y_lines[i]['upper']/scale, color=colors[i], alpha=0.1)
         self.axT.set_ylabel(y_label)
         if y_colors:
             self.ax.yaxis.label.set_color(colors[0])
@@ -369,9 +446,14 @@ class MdpPlotter():
             return [color_map(c) for c in np.arange(n_colors)]
 
     def _set_y_range(self, ax, y_min, y_max):
-        if y_min and y_max is None:
-            ax.set_ylim(bottom=y_min)
-        elif y_min is None and y_max:
-            ax.set_ylim(top=y_max)
-        elif y_min and y_max:
+        if y_min is not None and y_max is not None:
             ax.set_ylim(bottom=y_min, top=y_max)
+            return
+        elif y_min is not None and y_max is None:
+            ax.set_ylim(bottom=y_min)
+            return
+        elif y_min is None and y_max is not None:
+            ax.set_ylim(top=y_max)
+            return
+        else:
+            return

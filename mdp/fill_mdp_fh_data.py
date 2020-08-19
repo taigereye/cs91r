@@ -6,7 +6,7 @@ from pathlib import Path
 
 import analysis.MdpCLI as cl
 from analysis.MdpCLI import MdpArgs
-from visuals.MdpViz import MdpDataGatherer
+from analysis.MdpViz import MdpDataGatherer
 
 
 MDP_VERSION = 4

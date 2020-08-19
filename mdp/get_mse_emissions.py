@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 
 import mdp.analysis.MdpCLI as cl
 from mdp.analysis.MdpCLI import MdpArgs
-from mdp.visuals.MdpViz import MdpDataGatherer
+from mdp.analysis.MdpViz import MdpDataGatherer
 
 
 def main(argv):

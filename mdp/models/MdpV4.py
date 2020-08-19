@@ -77,8 +77,10 @@ class MdpFiniteHorizonV4():
         self.n_tech_stages = params['n_tech_stages']
         self.n_plants = params['n_plants']
         self.n_tax_levels = params['n_tax_levels']
-        self.n_total_levels = len(params['c_co2_base_levels'])
         self.co2_tax_cycle = params['co2_tax_cycle']
+        self.co2_tax_adjust = params['co2_tax_adjust']
+        self.c_co2_base_levels = params['c_co2_base_levels']
+        self.c_co2_inc_levels = params['c_co2_inc_levels']
         self.p_adv_tech = params['p_adv_tech']
         self.disc_rate = params['disc_rate']
         self.emit_targets = self.mdp_cost.read_targetsfile(params['emit_targets'])
@@ -302,8 +304,13 @@ class MdpFiniteHorizonV4():
 
     # Iterate over state space.
     def _get_iter_states(self):
-        idx_default = self.n_total_levels//2
-        l_lowest = (idx_default - (self.n_tax_levels-1)//2)
+        if self.co2_tax_adjust == "BASE":
+            idx_default = len(self.c_co2_base_levels)//2
+        elif self.co2_tax_adjust == "INC":
+            idx_default = len(self.c_co2_inc_levels)//2
+        else:
+            raise ValueError("co2_tax_adjust must be BASE or INC: {}".format(self.co2_tax_type))
+        l_lowest = idx_default - self.n_tax_levels//2
         l_highest = idx_default + (self.n_tax_levels-1)//2
         return it.product(np.arange(self.n_years+1),
                           np.arange(self.n_tech_stages),
@@ -333,7 +340,7 @@ class MdpFiniteHorizonV4():
         # Time and RES plants will always update.
         t_updated = t + 1
         r_updated = r + a
-        # Tech stage may update (advance).
+        # Tech stage may update (increase).
         if inc_tech_stage:
             v_updated = v + 1
         else:
@@ -348,16 +355,26 @@ class MdpFiniteHorizonV4():
         (t, v, r, l, e) = state
         l_updated = l
         e_updated = e
-        idx_default = self.n_total_levels//2
-        if t > 5 and t % self.co2_tax_cycle == 0:
+        # print("update_state_end_of_cycle l AND e: ", l, e)
+        if self.co2_tax_adjust == "BASE":
+            idx_default = len(self.c_co2_base_levels)//2
+            # print("update_state_end_of_cycle IDX_DEFAULT: ", idx_default)
+        elif self.co2_tax_adjust == "INC":
+            idx_default = len(self.c_co2_inc_levels)//2
+        else:
+            raise ValueError("co2_tax_adjust must be BASE or INC: {}".format(self.co2_tax_type))
+        if t > self.co2_tax_cycle-1 and t % self.co2_tax_cycle == 0:
+            # No adjustment.
             if e == 0:
                 l_updated = l
+            # Decrease tax level by 1.
             elif e == 1:
                 l_updated = max(l-1, idx_default-self.n_tax_levels//2)
+            # Increase tax level by 1.
             elif e == 2:
-
                 l_updated = min(l+1, idx_default+self.n_tax_levels//2)
             e_updated = self.calc_next_adjustment(t, r)
+        # print("update_state_end_of_cycle l AND e updated: ", l_updated, e_updated)
         return l_updated, e_updated
 
 
@@ -367,12 +384,11 @@ class MdpCostCalculatorV4():
         # General
         self.n_plants = params['n_plants']
         self.n_tax_levels = params['n_tax_levels']
-        self.n_total_levels = len(params['c_co2_base_levels'])
         # CO2 tax
         self.c_co2_base_levels = params['c_co2_base_levels']
-        self.c_co2_base = self.c_co2_base_levels[self.n_total_levels//2]
+        self.c_co2_base = self.c_co2_base_levels[len(params['c_co2_base_levels'])//2]
         self.c_co2_inc_levels = params['c_co2_inc_levels']
-        self.c_co2_inc = self.c_co2_inc_levels[self.n_total_levels//2]
+        self.c_co2_inc = self.c_co2_inc_levels[len(params['c_co2_inc_levels'])//2]
         self.co2_tax_type = params['co2_tax_type']
         self.co2_tax_adjust = params['co2_tax_adjust']
         self.co2_tax_cycle = params['co2_tax_cycle']
@@ -465,6 +481,14 @@ class MdpCostCalculatorV4():
         kw_plant = self.ff_size*self.ff_capacity
         hours_yr = 365*24
         return f * (self.ff_emit/1e3*kw_plant*hours_yr)
+
+    def co2_base(self, l):
+        c_co2_base, c_co2_inc = self._adjust_co2_tax(l)
+        return c_co2_base
+
+    def co2_inc(self, l):
+        c_co2_base, c_co2_inc = self._adjust_co2_tax(l)
+        return c_co2_inc
 
     def co2_price(self, t, l, f):
         c_co2_base, c_co2_inc = self._adjust_co2_tax(l)

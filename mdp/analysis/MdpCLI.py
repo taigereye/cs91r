@@ -98,6 +98,15 @@ def get_emissions_target(version, targetsfile):
     return emit_targets
 
 
+def get_mdp_data(version, datafile):
+    data_dir = Path("results/v{}/data".format(version))
+    df = data_dir / "d_v{}_{}.txt".format(version, datafile)
+    with open(df, 'r') as datafile:
+        data = eval(datafile.read())
+    datafile.close()
+    return data
+
+
 def get_mdp_model(version, params_all):
     mdp_model = None
     if int(version) == 3:
@@ -108,15 +117,6 @@ def get_mdp_model(version, params_all):
     for params in params_all:
         assert(mdp_model.param_names == list(params.keys()))
     return mdp_model
-
-
-def get_mdp_data(version, datafile):
-    data_dir = Path("results/v{}/data".format(version))
-    df = data_dir / "d_v{}_{}.txt".format(version, datafile)
-    with open(df, 'r') as datafile:
-        data = eval(datafile.read())
-    datafile.close()
-    return data
 
 
 def get_mdp_instance_multiple(mdp_model, params_all):

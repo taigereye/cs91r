@@ -6,7 +6,7 @@ from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
 from mdp.analysis.MdpCLI import MdpArgs
-from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
+from mdp.analysis.MdpViz import MdpDataGatherer, MdpPlotter
 
 
 def main(argv):

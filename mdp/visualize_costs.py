@@ -6,7 +6,7 @@ from pathlib import Path
 
 import mdp.analysis.MdpCLI as cl
 from mdp.analysis.MdpCLI import MdpArgs
-from mdp.visuals.MdpViz import MdpDataGatherer, MdpPlotter
+from mdp.analysis.MdpViz import MdpDataGatherer, MdpPlotter
 
 
 def main(argv):
@@ -45,25 +45,30 @@ def main(argv):
 
     x = mdp_data.get_time_range(t_range)
 
-    y_total, y_cum, y_breakdown, y_percents = ([] for i in range(3))
+    y_total, y_cum, y_breakdown, y_percents = ([] for i in range(4))
     if args.usedata:
         for pf in args.paramsfiles:
             data = cl.get_mdp_data(args.version, pf)
             y_total.append(mdp_data.get_data_component(data, 'cost_total'))
-            y_cum.append(mdp_data.get_data_component(data, 'cost_total'))
+            y_cum.append(mdp_data.convert_to_cumulative(mdp_data.get_data_component(data, 'cost_total')))
             y_breakdown.append(mdp_data.get_data_component(data, 'cost_breakdown'))
             y_percents.append(mdp_data.get_data_component(data, 'cost_percent'))
     else:
         mdp_fh_all = cl.get_mdp_instance_multiple(mdp_model, params_all)
         for mdp_fh in mdp_fh_all:
             y_total.append(mdp_data.calc_data_bounds(mdp_data.cost_total(mdp_fh)))
+            y_cum.append(mdp_data.convert_to_cumulative(mdp_data.calc_data_bounds(mdp_data.cost_total(mdp_fh))))
             y_breakdown.append(mdp_data.cost_breakdown_components(mdp_fh, components))
             y_percents.append(mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True))
 
     mdp_plot = MdpPlotter()
-    # Total cost
+    # Total annual cost
     mdp_plot.initialize("Total Annual Cost", "Time (years)", "Cost (USD/yr)")
     mdp_plot.plot_lines(x, y_total, args.paramsfiles, CI=args.confidenceinterval)
+    fig_total = mdp_plot.finalize()
+    # Total cumulative cost
+    mdp_plot.initialize("Total Cumulative Cost", "Time (years)", "Cost (USD/yr)")
+    mdp_plot.plot_lines(x, y_cum, args.paramsfiles, CI=args.confidenceinterval)
     fig_total = mdp_plot.finalize()
     # Absolute cost breakdown
     mdp_plot.initialize("Absolute Annual Cost Breakdown", "Time (years)", "Cost (USD/yr)")
