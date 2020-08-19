@@ -294,8 +294,8 @@ class MdpDataGatherer():
             # Include plants built in current year with total RES plants.
             if var_code == 'r':
                 variables.append(state[idx]+a)
-            # elif var_code == 'l':
-            #     variables.append(self._map_id_to_tax_level(state[idx], tax_levels))
+            elif var_code == 'l':
+                variables.append(self._map_id_to_tax_level(state[idx], tax_levels))
             elif var_code == 'e':
                 variables.append(self._map_id_to_adjustment(state[idx]))
             else:
