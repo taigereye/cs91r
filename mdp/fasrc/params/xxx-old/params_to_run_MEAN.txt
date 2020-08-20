@@ -1,0 +1,15 @@
+1_finland_mean
+1_sweden_mean
+1_switzerland_mean
+1_UK_mean
+1_USA_mean
+3_finland_mean
+3_sweden_mean
+3_switzerland_mean
+3_UK_mean
+3_USA_mean
+5_finland_mean
+5_sweden_mean
+5_switzerland_mean
+5_UK_mean
+5_USA_mean
