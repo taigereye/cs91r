@@ -176,6 +176,7 @@ class MdpDataGatherer():
 
     # Zip state with action taken in state for optimal policy of single MDP run.
     def _annotate_opt_policy_techstage(self, mdp_fh, run):
+        # print("_annotate_opt_policy_techstage\n\n(t, v, r, l, e):\n")
         opt_policy = mdp_fh.mdp_inst.policy
         policy_annotated = []
         t = 0
@@ -193,8 +194,14 @@ class MdpDataGatherer():
             idx = mdp_fh.state_to_id[state]
             a = opt_policy[idx][step]
             policy_annotated.append([(t, v, r, l, e), a])
-            t += 1
             r += a
+            # print("{}: {}   {}  {}  {}".format(
+            #     state, 
+            #     mdp_fh.mdp_cost.co2_base(l), 
+            #     round(mdp_fh.mdp_cost.co2_price(t, l, 5-(r))), 
+            #     round(mdp_fh.mdp_cost.co2_tax(t, l, 5-(r)))/1e9,
+            #     round(mdp_fh.mdp_cost.co2_emit(5-(r)))/1e6))
+            t += 1
         return policy_annotated
 
     # Calculate mean and confidence interval of max size given a matrix where each row is a data array.

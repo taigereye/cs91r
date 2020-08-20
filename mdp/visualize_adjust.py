@@ -83,6 +83,7 @@ def main(argv):
     else:
         targets = None
 
+    # params_names = args.paramsfiles
     params_names = ["{}: static".format(args.paramsfiles[0])] + ["{}: adjusted".format(pf) for pf in args.paramsfiles[1:]]
     colors = None
 

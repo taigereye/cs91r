@@ -52,28 +52,30 @@ def main(argv):
             y_l.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'l'))['middle'])
             y_e.append(mdp_data.calc_data_bounds(mdp_data.get_state_variable(mdp_fh, 'e'))['middle'])
 
+    params_names = args.paramsfiles
+
     figs_state = []
     mdp_plot = MdpPlotter()
     # Tech stage
     mdp_plot.initialize("State Variable: Tech Stage", "Time (years)", "Tech Stage")
-    mdp_plot.plot_bars(x, y_v, args.paramsfiles,
+    mdp_plot.plot_bars(x, y_v, params_names,
                        y_min=0, y_max=params_all[0]['n_tech_stages']-1)
     fig = mdp_plot.finalize()
     figs_state.append(fig)
     # RES plants
     mdp_plot.initialize("State Variable: RES Plants", "Time (years)", "RES Plants")
-    mdp_plot.plot_bars(x, y_r, args.paramsfiles,
+    mdp_plot.plot_bars(x, y_r, params_names,
                        y_min=0, y_max=params_all[0]['n_plants'])
     fig = mdp_plot.finalize()
     figs_state.append(fig)
     # Tax level
     mdp_plot.initialize("State Variable: Tax Level", "Time (years)", "Tax Delta (USD)")
-    mdp_plot.plot_scatter(x, y_l, args.paramsfiles)
+    mdp_plot.plot_scatter(x, y_l, params_names)
     fig = mdp_plot.finalize()
     figs_state.append(fig)
     # Tax adjustment
     mdp_plot.initialize("State Variable: Tax Adjustment", "Time (years)", "Tax Adjustment")
-    mdp_plot.plot_scatter(x, y_e, args.paramsfiles,
+    mdp_plot.plot_scatter(x, y_e, params_names,
                           y_min=-2.5*(params_all[0]['n_tax_levels']//2),
                           y_max=2.5*(params_all[0]['n_tax_levels']//2))
     fig = mdp_plot.finalize()

@@ -358,7 +358,6 @@ class MdpFiniteHorizonV4():
         # print("update_state_end_of_cycle l AND e: ", l, e)
         if self.co2_tax_adjust == "BASE":
             idx_default = len(self.c_co2_base_levels)//2
-            # print("update_state_end_of_cycle IDX_DEFAULT: ", idx_default)
         elif self.co2_tax_adjust == "INC":
             idx_default = len(self.c_co2_inc_levels)//2
         else:

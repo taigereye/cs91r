@@ -62,14 +62,16 @@ def main(argv):
     else:
         targets = None
 
+    params_names = args.paramsfiles
+
     mdp_plot = MdpPlotter()
     # RES penetration
     mdp_plot.initialize("RES Penetration", "Time (years)", "RES Penetration (%)")
-    mdp_plot.plot_lines(x, y_res, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_res, params_names, CI=args.confidenceinterval)
     fig_res = mdp_plot.finalize()
     # CO2 emissions (actual vs. target)
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
-    mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_emit, params_names, CI=args.confidenceinterval)
     if targets:
         mdp_plot.add_scatter_points(targets['x'][t_range[0]:t_range[1]], targets['y'][t_range[0]:t_range[1]], "Emissions target")
     fig_emit = mdp_plot.finalize()

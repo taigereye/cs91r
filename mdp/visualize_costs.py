@@ -61,14 +61,17 @@ def main(argv):
             y_breakdown.append(mdp_data.cost_breakdown_components(mdp_fh, components))
             y_percents.append(mdp_data.cost_breakdown_components(mdp_fh, components, is_percent=True))
 
+    params_names = args.paramsfiles
+    colors = None
+
     mdp_plot = MdpPlotter()
     # Total annual cost
     mdp_plot.initialize("Total Annual Cost", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_lines(x, y_total, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_total, params_names, colors=colors, CI=args.confidenceinterval)
     fig_total = mdp_plot.finalize()
     # Total cumulative cost
     mdp_plot.initialize("Total Cumulative Cost", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_lines(x, y_cum, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_cum, params_names, colors=colors, CI=args.confidenceinterval)
     fig_total = mdp_plot.finalize()
     # Absolute cost breakdown
     mdp_plot.initialize("Absolute Annual Cost Breakdown", "Time (years)", "Cost (USD/yr)")

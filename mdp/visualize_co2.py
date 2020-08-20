@@ -55,26 +55,29 @@ def main(argv):
             y_tax.append(mdp_data.calc_data_bounds(mdp_data.co2_tax_collected(mdp_fh)))
             y_emit.append(mdp_data.calc_data_bounds(mdp_data.co2_emissions(mdp_fh)))
 
+    params_names = args.paramsfiles
+    colors = None
+
     figs_co2 = []
     mdp_plot = MdpPlotter()
     # Tax level
     mdp_plot.initialize("State Variable: Tax Level", "Time (years)", "Tax Delta (USD)")
-    mdp_plot.plot_scatter(x, y_l, args.paramsfiles)
+    mdp_plot.plot_scatter(x, y_l, params_names, colors=colors)
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
     # Current CO2 price
     mdp_plot.initialize("Current CO2 Price", "Time (years)", "Cost (USD/ton)")
-    mdp_plot.plot_lines(x, y_price, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_price, params_names, CI=args.confidenceinterval, colors=colors)
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
     # CO2 tax collected
     mdp_plot.initialize("Annual CO2 Tax Collected", "Time (years)", "Cost (USD/yr)")
-    mdp_plot.plot_lines(x, y_tax, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_tax, params_names, CI=args.confidenceinterval, colors=colors)
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
     # CO2 emissions
     mdp_plot.initialize("Annual CO2 Emissions", "Time (years)", "CO2 Emissions (ton/yr)")
-    mdp_plot.plot_lines(x, y_emit, args.paramsfiles, CI=args.confidenceinterval)
+    mdp_plot.plot_lines(x, y_emit, params_names, CI=args.confidenceinterval, colors=colors)
     fig = mdp_plot.finalize()
     figs_co2.append(fig)
 
