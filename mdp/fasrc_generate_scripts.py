@@ -12,7 +12,7 @@ def main(argv):
     parser.add_argument("-g", "--gigs", help="allotted memory in GB", type=int, default=64)
     args = parser.parse_args()
 
-    fasrc_dir = Path("fasrc/")
+    fasrc_dir = Path("fasrc/params/")
     pf = fasrc_dir / "{}.txt".format(args.paramslist)
     with open(pf, 'r') as paramsfile:
         params_list = paramsfile.readlines()
