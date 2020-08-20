@@ -43,7 +43,7 @@ def main(argv):
         targets_mean, targets_dec = (dict() for i in range(2))
         emit_dec = calc_emit_dec(mdp_fh, y_emit, y)
 
-        years_sampled = [i*y for i in range(0, mdp_fh.n_years//y)]
+        years_sampled = [i*y for i in range(0, (mdp_fh.n_years//y))]
         # Sampled from mean of optimal policy.
         targets_mean['x'] = years_sampled
         targets_mean['y'] = [y_emit[i] for i in years_sampled]
