@@ -4,7 +4,7 @@ joblib==0.15.1
 kiwisolver==1.2.0
 matplotlib==3.2.1
 -e git+https://github.com/taigereye/cs91r.git@41c6dd7339b7c5802e75478714411f3f30a0ed84#egg=mdp
-numpy==1.18.2
+numpy==1.22.0
 pandas==1.0.3
 pathlib==1.0.1
 pymdptoolbox==4.0b3
