@@ -1,6 +1,6 @@
 cs91r==1.0
 cycler==0.10.0
-joblib==0.15.1
+joblib==1.2.0
 kiwisolver==1.2.0
 matplotlib==3.2.1
 -e git+https://github.com/taigereye/cs91r.git@41c6dd7339b7c5802e75478714411f3f30a0ed84#egg=mdp
